@@ -13,18 +13,19 @@ def neighbours_to_graph(neighbours):
     return gt.Graph(dict(zip(range(n), neighbours)), directed=False)
 
 
-def random_graph(n, m, seed):
+def random_graph(n, params, seed):
     np.random.seed(seed=seed)
-    M = m * n // 2
+    M = params["M"]
     neighbours = [[] for i in range(n)]
     for l in range(M):
         i = np.random.randint(n)
         j = np.random.randint(n)
-        while i in neighbour[j]:
+        while i in neighbours[j]:
             i = np.random.randint(n)
             j = np.random.randint(n)
         neighbours[i].append(j)
         neighbours[j].append(i)
+    return neighbours_to_graph(neighbours)
 
 
 def watts_strogatz(n, params, seed):
@@ -116,6 +117,8 @@ def generator_dup_split(n, params, seed):
 
 
 def generator(n, params, seed):
+    if params["model-"] == "er":
+        g = random_graph(n, params, seed)
     if params["model-"] == "ws":
         g = watts_strogatz(n, params, seed)
     elif params["model-"] == "ds":
@@ -178,7 +181,9 @@ def ramsey_community_number(params, epsilon, nr):
         n_left = n // 2
         n_right = n
         while abs(n_left - n_right) > 1:
-            print(f"binary search: [{n_left}, {n_right}], n: {n}, fraction with communities: {nr_c/nr} ...")
+            print(
+                f"binary search: [{n_left}, {n_right}], n: {n}, fraction with communities: {nr_c/nr} ..."
+            )
             n = (n_left + n_right) // 2
             nr_c_previous = nr_c
             nr_c = np.sum(n_instances_with_cummunities(n, params, nr) > 1)
@@ -192,8 +197,11 @@ def ramsey_community_number(params, epsilon, nr):
     else:
         n_left = nr_c
         n_right = nr_c
-    print(f"binary search: [{n_left}, {n_right}], r_c: {n}, fraction with communities: {nr_c/nr}")
+    print(
+        f"binary search: [{n_left}, {n_right}], r_c: {n}, fraction with communities: {nr_c/nr}"
+    )
     return n
+
 
 def get_n_communities(g):
     """Computes the number of communities in a graph using the graph-tool block model."""
@@ -202,6 +210,7 @@ def get_n_communities(g):
         effective=state.get_Be(),
         unique=np.unique(np.array(state.get_blocks())).size,
     )
+
 
 def export_draw(g, filename, is_state=False):
     if is_state:
