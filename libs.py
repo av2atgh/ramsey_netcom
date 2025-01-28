@@ -6,6 +6,7 @@ import graph_tool.all as gt
 
 
 def neighbours_to_graph(neighbours):
+    """Converts a list of adjecencies into a graph-tool undirected graph."""
     n = len(neighbours)
     for i in range(n):
         neighbours_ = np.array(neighbours[i])
@@ -14,6 +15,7 @@ def neighbours_to_graph(neighbours):
 
 
 def random_graph(n, params, seed):
+    """Erdos-Renyi random graph model with M edges."""
     np.random.seed(seed=seed)
     M = params["M"]
     neighbours = [[] for i in range(n)]
@@ -213,6 +215,7 @@ def get_n_communities(g):
 
 
 def export_draw(g, filename, is_state=False):
+    """Draws a network highlighting its communities."""
     if is_state:
         g.draw(output=filename)
     else:
