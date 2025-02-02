@@ -1,7 +1,6 @@
 import os
 import json
 import numpy as np
-from copy import deepcopy
 import graph_tool.all as gt
 
 
@@ -11,7 +10,7 @@ def neighbours_to_graph(neighbours):
     for i in range(n):
         neighbours_ = np.array(neighbours[i])
         neighbours[i] = list(neighbours_[neighbours_ > i])
-    return gt.Graph(dict(zip(range(n), neighbours)), directed=False)
+    return gt.Graph(dict(zip(range(n), neighbours)), directed=False), neighbours
 
 
 def random_graph(n, params, seed):
@@ -27,31 +26,26 @@ def random_graph(n, params, seed):
             j = np.random.randint(n)
         neighbours[i].append(j)
         neighbours[j].append(i)
-    return neighbours_to_graph(neighbours)
+    return neighbours
 
 
 def watts_strogatz(n, params, seed):
     """Watts-Strogatz model with K neighbors and reqiring rate p."""
     np.random.seed(seed=seed)
-    K = params["K"]
+    K = np.array(params["K"])
     p = params["p"]
-    half_K = K // 2
     neighbours = [[] for i in range(n)]
     for i in range(n):
-        for j in range(i + 1, i + half_K + 1):
-            if j > n - 1:
-                j -= n
-            neighbours[i].append(j)
-            neighbours[j].append(i)
-    for i in range(n):
-        for l in range(half_K):
-            j = neighbours[i][l]
+        for j in i + K:
             if np.random.random() < p:
                 j = np.random.randint(n)
                 while j in neighbours[i]:
                     j = np.random.randint(n)
-            neighbours[i][l] = j
-    return neighbours_to_graph(neighbours)
+            else:
+                j = j - n if j > n - 1 else j
+            neighbours[i].append(j)
+            neighbours[j].append(i)
+    return neighbours
 
 
 def generator_barabasi_albert(n, params, seed):
@@ -73,7 +67,7 @@ def generator_barabasi_albert(n, params, seed):
             neighbours[j].append(i)
             replicas += [i, j]
         neighbours.append(new_neighbours)
-    return neighbours_to_graph(neighbours)
+    return neighbours
 
 
 def generator_local_search(n, params, seed):
@@ -92,12 +86,13 @@ def generator_local_search(n, params, seed):
         for j in visited_unique:
             neighbours[j].append(i)
         neighbours.append(visited_unique)
-    return neighbours_to_graph(neighbours)
+    return neighbours
 
 
 def generator_dup_split(n, params, seed):
     """Duplication-Split model with duplication rate q."""
     np.random.seed(seed=seed)
+    p = params["p"] if "p" in params else 0
     q = params["q"]
     neighbours = [[1], [0]]
     is_duplicate = np.random.random(n) < q
@@ -106,7 +101,10 @@ def generator_dup_split(n, params, seed):
         if is_duplicate[i]:
             for k in neighbours[j]:
                 neighbours[k].append(i)
-            new_neighbours = deepcopy(neighbours[j])
+            new_neighbours = [k for k in neighbours[j]]
+            if p > 0 and np.random.random() < p:
+                neighbours[j].append(i)
+                new_neighbours.append(j)
         else:
             l = np.random.randint(len(neighbours[j]))
             k = neighbours[j][l]
@@ -115,30 +113,36 @@ def generator_dup_split(n, params, seed):
             neighbours[k][m] = i
             new_neighbours = [j, k]
         neighbours.append(new_neighbours)
-    return neighbours_to_graph(neighbours)
+    return neighbours
 
 
 def generator(n, params, seed):
     if params["model-"] == "er":
-        g = random_graph(n, params, seed)
-    if params["model-"] == "ws":
-        g = watts_strogatz(n, params, seed)
+        neighbours = random_graph(n, params, seed)
+    elif params["model-"] == "ws":
+        neighbours = watts_strogatz(n, params, seed)
     elif params["model-"] == "ds":
-        g = generator_dup_split(n, params, seed)
+        neighbours = generator_dup_split(n, params, seed)
     elif params["model-"] == "ba":
-        g = generator_barabasi_albert(n, params, seed)
+        neighbours = generator_barabasi_albert(n, params, seed)
     elif params["model-"] == "ls":
-        g = generator_local_search(n, params, seed)
-    return g
+        neighbours = generator_local_search(n, params, seed)
+    return neighbours
 
 
 def get_model_name(params):
-    return "_".join([f"{k}{v}" for (k, v) in params.items()])
+    return "_".join(
+        [
+            f"{k}{'_'.join([str(e) for e in v]) if type(v) == list else v}"
+            for (k, v) in params.items()
+        ]
+    )
 
 
 def draw_instance(n, params, seed, path):
     """Auxiliary method to draw a graph instance."""
-    g = generator(n, params, seed)
+    neighbours = generator(n, params, seed)
+    g = neighbours_to_graph(neighbours)
     model_name = get_model_name(params)
     filename = os.path.join(path, f"{model_name}_seed{seed}.pdf")
     export_draw(g, filename)
@@ -150,7 +154,8 @@ def find_instances_with_communities(n, params, n_instances, path):
     seed = 0
     count = 0
     while count < n_instances:
-        g = generator(n, params, seed)
+        neighbours = generator(n, params, seed)
+        g = neighbours_to_graph(neighbours)
         state, n_communities = get_n_communities(g)
         if n_communities["unique"] > 1:
             filename = os.path.join(path, f"{model_name}_n{n}_seed{seed}.pdf")
@@ -162,17 +167,18 @@ def find_instances_with_communities(n, params, n_instances, path):
 def n_instances_with_cummunities(n, params, nr):
     c = np.empty(nr, dtype=int)
     for r in range(nr):
-        g = generator(n, params, seed=r)
+        neighbours = generator(n, params, seed=r)
+        g = neighbours_to_graph(neighbours)
         state = gt.minimize_blockmodel_dl(g)
         c[r] = np.unique(np.array(state.get_blocks())).size
     return c
 
 
-def ramsey_community_number(params, epsilon, nr):
+def ramsey_community_number(params, epsilon, nr, n0=10):
     """Estimates the Ramsey community number of a graph."""
     nr_95 = int((1 - epsilon) * nr)
     # find upper bound, some n satisfying nr_c >= nr_95
-    n = 10
+    n = n0
     nr_c = np.sum(n_instances_with_cummunities(n, params, nr) > 1)
     while nr_c < nr_95:
         n *= 2
