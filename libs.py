@@ -10,7 +10,30 @@ def neighbours_to_graph(neighbours):
     for i in range(n):
         neighbours_ = np.array(neighbours[i])
         neighbours[i] = list(neighbours_[neighbours_ > i])
-    return gt.Graph(dict(zip(range(n), neighbours)), directed=False), neighbours
+    return gt.Graph(dict(zip(range(n), neighbours)), directed=False)
+
+
+def generator_bubbles(n, params, seed):
+    L = params["L"]
+    neighbours = [[] for i in range(n)]
+    neighbours[0].append(1)
+    neighbours[1].append(0)
+    edges = [(0, 1)]
+    i = 2
+    while i < n:
+        e = np.random.randint(len(edges))
+        j = edges[e][0]
+        k = edges[e][1]
+        new_neighbours = [j] + list(range(i, i + L)) + [k]
+        for l in range(1, L + 2):
+            j = new_neighbours[l - 1]
+            k = new_neighbours[l]
+            edges.append((j, k))
+            if j < n and k < n:
+                neighbours[j].append(k)
+                neighbours[k].append(j)
+        i += L
+    return neighbours
 
 
 def random_graph(n, params, seed):
@@ -30,11 +53,22 @@ def random_graph(n, params, seed):
 
 
 def watts_strogatz(n, params, seed):
-    """Watts-Strogatz model with K neighbors and reqiring rate p."""
-    np.random.seed(seed=seed)
+    """An extension of the Watts-Strogatz model.
+    Input
+        params: {'K': list, 'p': float}
+    Description:
+        n nodes are arranged in a ring.
+        Each node is connected to len(K) neighbors to the right,
+        their distances specified by K = [x_1, x_2, ...].
+        Examples:
+            Canonical Watts-Strogatz (K, p):  {'K': [1,2,..,k], 'p': p}, where k = K/2
+            Watts-Strogatz with skip (s, k, p): {'K': [s, s+1, ...,s+k], 'p': p}
+        Each of the len(K) links is reqired with probability p.
+    """
     K = np.array(params["K"])
     p = params["p"]
     neighbours = [[] for i in range(n)]
+    np.random.seed(seed=seed)
     for i in range(n):
         for j in i + K:
             if np.random.random() < p:
@@ -48,12 +82,24 @@ def watts_strogatz(n, params, seed):
     return neighbours
 
 
+def watts_strogatz_vec(n, params, seed):
+    K = np.array(params["K"])
+    p = params["p"]
+    x = np.random.randint(n, size=(n, K.size))
+    y = np.repeat((np.arange(n))[:, np.newaxis], K.size, axis=1) + np.repeat(
+        K[np.newaxis, :], n, axis=0
+    )
+    y = np.where(y < n, y, y - n)
+    z = np.random.binomial(1, p, size=(n, K.size))
+    return list(np.where(z == 1, x, y))
+
+
 def generator_barabasi_albert(n, params, seed):
     """Barabasi-Albert model with m new links per node."""
-    np.random.seed(seed=seed)
     m = params["m"]
     neighbours = [[1], [0]]
     replicas = [0, 1]
+    np.random.seed(seed=seed)
     for i in range(2, n):
         n_replicas = len(replicas)
         new_neighbours = []
@@ -72,9 +118,9 @@ def generator_barabasi_albert(n, params, seed):
 
 def generator_local_search(n, params, seed):
     """Local-Search model with depth d."""
-    np.random.seed(seed=seed)
     d = params["d"]
     neighbours = [[1], [0]]
+    np.random.seed(seed=seed)
     for i in range(2, n):
         visited = [np.random.randint(i)]
         for step in range(d):
@@ -116,17 +162,53 @@ def generator_dup_split(n, params, seed):
     return neighbours
 
 
+def generator_dup_divergence(n, params, seed):
+    """Duplication-Split model with duplication rate q."""
+    np.random.seed(seed=seed)
+    p = params["p"] if "p" in params else 0
+    q = params["q"]
+    neighbours = [[1], [0]]
+    is_duplicate = np.random.random(n) < q
+    for i in range(2, n):
+        j = np.random.randint(i)
+        node = np.array([i, j])
+        neighbours_ = np.array(neighbours[j])
+        m = np.random.binomial(neighbours_.size, q)
+        if m > 0:
+            choice = node[np.random.randint(2, size=m)]
+        if is_duplicate[i]:
+            for k in neighbours[j]:
+                neighbours[k].append(i)
+            new_neighbours = [k for k in neighbours[j]]
+            if p > 0 and np.random.random() < p:
+                neighbours[j].append(i)
+                new_neighbours.append(j)
+        else:
+            l = np.random.randint(len(neighbours[j]))
+            k = neighbours[j][l]
+            m = neighbours[k].index(j)
+            neighbours[j][l] = i
+            neighbours[k][m] = i
+            new_neighbours = [j, k]
+        neighbours.append(new_neighbours)
+    return neighbours
+
+
 def generator(n, params, seed):
     if params["model-"] == "er":
         neighbours = random_graph(n, params, seed)
     elif params["model-"] == "ws":
         neighbours = watts_strogatz(n, params, seed)
+    elif params["model-"] == "wsv":
+        neighbours = watts_strogatz_vec(n, params, seed)
     elif params["model-"] == "ds":
         neighbours = generator_dup_split(n, params, seed)
     elif params["model-"] == "ba":
         neighbours = generator_barabasi_albert(n, params, seed)
     elif params["model-"] == "ls":
         neighbours = generator_local_search(n, params, seed)
+    elif params["model-"] == "bb":
+        neighbours = generator_bubbles(n, params, seed)
     return neighbours
 
 
