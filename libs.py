@@ -2,6 +2,7 @@ import os
 import json
 import numpy as np
 import graph_tool.all as gt
+import igraph as ig
 
 
 def neighbours_to_graph(neighbours):
@@ -221,50 +222,44 @@ def get_model_name(params):
     )
 
 
-def draw_instance(n, params, seed, path):
-    """Auxiliary method to draw a graph instance."""
-    neighbours = generator(n, params, seed)
+def igraph_from_neighbours(neighbours, directed=False):
+    n = len(neighbours)
+    edges = [(i, j) for i in range(n) for j in neighbours[i] if i < j]
+    return ig.Graph(n=n, edges=edges, directed=directed)
+
+
+def get_n_communities(neighbours, method, directed=False):
     g = neighbours_to_graph(neighbours)
-    model_name = get_model_name(params)
-    filename = os.path.join(path, f"{model_name}_seed{seed}.pdf")
-    export_draw(g, filename)
+    if method == "blocks":
+        state = gt.minimize_blockmodel_dl(g)
+        labels = state.get_blocks()
+    elif method == "potts":
+        g_ = igraph_from_neighbours(neighbours, directed=directed)
+        state = g_.community_spinglass(gamma=0, update_rule="config")
+        labels = state.membership
+    #        state = gt.GenPottsBPState(g, f=np.zeros((10, 10))-1.0e-020)
+    #        labels = list(state.sample())
+    return g, state, labels, np.unique(labels).size
 
 
-def find_instances_with_communities(n, params, n_instances, path):
-    """Auxiliary method to find and draw instances with 2 or more communities."""
-    model_name = get_model_name(params)
-    seed = 0
-    count = 0
-    while count < n_instances:
-        neighbours = generator(n, params, seed)
-        g = neighbours_to_graph(neighbours)
-        state, n_communities = get_n_communities(g)
-        if n_communities["unique"] > 1:
-            filename = os.path.join(path, f"{model_name}_n{n}_seed{seed}.pdf")
-            export_draw(state, filename, is_state=True)
-            count += 1
-        seed += 1
-
-
-def n_instances_with_cummunities(n, params, nr):
+def n_instances_with_cummunities(n, params, nr, method="blocks"):
     c = np.empty(nr, dtype=int)
     for r in range(nr):
         neighbours = generator(n, params, seed=r)
-        g = neighbours_to_graph(neighbours)
-        state = gt.minimize_blockmodel_dl(g)
-        c[r] = np.unique(np.array(state.get_blocks())).size
+        g, state, labels, n_communities = get_n_communities(neighbours, method=method)
+        c[r] = n_communities
     return c
 
 
-def ramsey_community_number(params, epsilon, nr, n0=10):
+def ramsey_community_number(params, epsilon, nr, n0=10, method="blocks"):
     """Estimates the Ramsey community number of a graph."""
     nr_95 = int((1 - epsilon) * nr)
     # find upper bound, some n satisfying nr_c >= nr_95
     n = n0
-    nr_c = np.sum(n_instances_with_cummunities(n, params, nr) > 1)
+    nr_c = np.sum(n_instances_with_cummunities(n, params, nr, method=method) > 1)
     while nr_c < nr_95:
         n *= 2
-        nr_c = np.sum(n_instances_with_cummunities(n, params, nr) > 1)
+        nr_c = np.sum(n_instances_with_cummunities(n, params, nr, method=method) > 1)
         print(f"upper bound: {n}, fraction with communities: {nr_c/nr} ...")
     if nr_c > nr_95:
         # binary search, find min n satisfying nr_c = nr_95
@@ -276,14 +271,18 @@ def ramsey_community_number(params, epsilon, nr, n0=10):
             )
             n = (n_left + n_right) // 2
             nr_c_previous = nr_c
-            nr_c = np.sum(n_instances_with_cummunities(n, params, nr) > 1)
+            nr_c = np.sum(
+                n_instances_with_cummunities(n, params, nr, method=method) > 1
+            )
             if nr_c >= nr_95:
                 n_right = n
             else:
                 n_left = n
         if nr_c < nr_95:
             n += 1
-            nr_c = np.sum(n_instances_with_cummunities(n, params, nr) > 1)
+            nr_c = np.sum(
+                n_instances_with_cummunities(n, params, nr, method=method) > 1
+            )
     else:
         n_left = nr_c
         n_right = nr_c
@@ -293,15 +292,6 @@ def ramsey_community_number(params, epsilon, nr, n0=10):
     return n
 
 
-def get_n_communities(g):
-    """Computes the number of communities in a graph using the graph-tool block model."""
-    state = gt.minimize_blockmodel_dl(g)
-    return state, dict(
-        effective=state.get_Be(),
-        unique=np.unique(np.array(state.get_blocks())).size,
-    )
-
-
 def export_draw(g, filename, is_state=False):
     """Draws a network highlighting its communities."""
     if is_state:
@@ -309,3 +299,30 @@ def export_draw(g, filename, is_state=False):
     else:
         state = gt.minimize_blockmodel_dl(g)
         state.draw(output=filename)
+
+
+def draw_instance(n, params, seed, path):
+    """Auxiliary method to draw a graph instance."""
+    neighbours = generator(n, params, seed)
+    g = neighbours_to_graph(neighbours)
+    model_name = get_model_name(params)
+    filename = os.path.join(path, f"{model_name}_seed{seed}.pdf")
+    export_draw(g, filename)
+
+
+def find_instances_with_communities(n, params, n_instances, path, method="blocks"):
+    """Auxiliary method to find and draw instances with 2 or more communities."""
+    model_name = get_model_name(params)
+    seed = 0
+    count = 0
+    while count < n_instances:
+        neighbours = generator(n, params, seed)
+        g, state, labels, n_communities = get_n_communities(neighbours, method=method)
+        if n_communities > 1:
+            filename = os.path.join(path, f"{model_name}_n{n}_seed{seed}_{method}.pdf")
+            if method == "blocks":
+                state.draw(output=filename)
+            elif method == "potts":
+                gt.graph_draw(g, vertex_fill_color=labels, output=filename)
+            count += 1
+        seed += 1
