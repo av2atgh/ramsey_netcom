@@ -5,15 +5,6 @@ import graph_tool.all as gt
 import igraph as ig
 
 
-def neighbours_to_graph(neighbours):
-    """Converts a list of adjecencies into a graph-tool undirected graph."""
-    n = len(neighbours)
-    for i in range(n):
-        neighbours_ = np.array(neighbours[i])
-        neighbours[i] = list(neighbours_[neighbours_ > i])
-    return gt.Graph(dict(zip(range(n), neighbours)), directed=False)
-
-
 def generator_bubbles(n, params, seed):
     L = params["L"]
     neighbours = [[] for i in range(n)]
@@ -222,31 +213,50 @@ def get_model_name(params):
     )
 
 
+def graphtool_from_neighbours(neighbours_input, directed=False):
+    """Converts a list of adjecencies into a graph-tool undirected graph."""
+    neighbours = neighbours_input.copy()
+    n = len(neighbours)
+    for i in range(n):
+        neighbours_ = np.array(neighbours[i])
+        neighbours[i] = list(neighbours_[neighbours_ > i])
+    return gt.Graph(dict(zip(range(n), neighbours)), directed=directed)
+
+
 def igraph_from_neighbours(neighbours, directed=False):
     n = len(neighbours)
     edges = [(i, j) for i in range(n) for j in neighbours[i] if i < j]
     return ig.Graph(n=n, edges=edges, directed=directed)
 
 
-def get_n_communities(neighbours, method, directed=False):
-    g = neighbours_to_graph(neighbours)
+def get_n_communities(g, method="blocks"):
     if method == "blocks":
         state = gt.minimize_blockmodel_dl(g)
         labels = state.get_blocks()
+    elif method == "modularity":
+        state = gt.ModularityState(g)
+        for beta in [1, 10, 100, 1000]:
+            state.gibbs_sweep(beta=beta, niter=10)
+        labels = state.b.fa
     elif method == "potts":
-        g_ = igraph_from_neighbours(neighbours, directed=directed)
-        state = g_.community_spinglass(gamma=0, update_rule="config")
+        g_ = ig.Graph.from_graph_tool(g)
+        state = g_.community_spinglass(gamma=1, update_rule="config")
         labels = state.membership
-    #        state = gt.GenPottsBPState(g, f=np.zeros((10, 10))-1.0e-020)
-    #        labels = list(state.sample())
-    return g, state, labels, np.unique(labels).size
+    return g, state, labels, len(np.unique(labels))
+
+
+def get_n_communities_from_neighbours(neighbours, method="blocks", directed=False):
+    g = graphtool_from_neighbours(neighbours, directed=directed)
+    return get_n_communities(g, method=method)
 
 
 def n_instances_with_cummunities(n, params, nr, method="blocks"):
     c = np.empty(nr, dtype=int)
     for r in range(nr):
         neighbours = generator(n, params, seed=r)
-        g, state, labels, n_communities = get_n_communities(neighbours, method=method)
+        g, state, labels, n_communities = get_n_communities_from_neighbours(
+            neighbours, method=method
+        )
         c[r] = n_communities
     return c
 
@@ -257,14 +267,32 @@ def ramsey_community_number(params, epsilon, nr, n0=10, method="blocks"):
     # find upper bound, some n satisfying nr_c >= nr_95
     n = n0
     nr_c = np.sum(n_instances_with_cummunities(n, params, nr, method=method) > 1)
-    while nr_c < nr_95:
-        n *= 2
-        nr_c = np.sum(n_instances_with_cummunities(n, params, nr, method=method) > 1)
-        print(f"upper bound: {n}, fraction with communities: {nr_c/nr} ...")
     if nr_c > nr_95:
-        # binary search, find min n satisfying nr_c = nr_95
-        n_left = n // 2
+        # n0 is an upper bound, find lower bound
+        while nr_c > nr_95:
+            n_right = n
+            n = n // 2
+            nr_c = np.sum(
+                n_instances_with_cummunities(n, params, nr, method=method) > 1
+            )
+            print(f"[{n}, {n_right}], fraction with communities: {nr_c/nr} ...")
+        n_left = n
+    elif nr_c < nr_95:
+        # n0 is an lower bound, find upper bound
+        while nr_c < nr_95:
+            n_left = n
+            n *= 2
+            nr_c = np.sum(
+                n_instances_with_cummunities(n, params, nr, method=method) > 1
+            )
+            print(f"[{n_left}, {n}], fraction with communities: {nr_c/nr} ...")
         n_right = n
+    else:
+        # nothng to do
+        n_left = nr_c
+        n_right = nr_c
+    if n_left != n_right:
+        # binary search, find min n satisfying nr_c = nr_95
         while abs(n_left - n_right) > 1:
             print(
                 f"binary search: [{n_left}, {n_right}], n: {n}, fraction with communities: {nr_c/nr} ..."
@@ -283,31 +311,25 @@ def ramsey_community_number(params, epsilon, nr, n0=10, method="blocks"):
             nr_c = np.sum(
                 n_instances_with_cummunities(n, params, nr, method=method) > 1
             )
-    else:
-        n_left = nr_c
-        n_right = nr_c
     print(
         f"binary search: [{n_left}, {n_right}], r_c: {n}, fraction with communities: {nr_c/nr}"
     )
     return n
 
 
-def export_draw(g, filename, is_state=False):
-    """Draws a network highlighting its communities."""
-    if is_state:
-        g.draw(output=filename)
-    else:
-        state = gt.minimize_blockmodel_dl(g)
-        state.draw(output=filename)
-
-
-def draw_instance(n, params, seed, path):
+def draw_instance(n, params, seed, path, rewire=False):
     """Auxiliary method to draw a graph instance."""
     neighbours = generator(n, params, seed)
-    g = neighbours_to_graph(neighbours)
+    g = graphtool_from_neighbours(neighbours)
     model_name = get_model_name(params)
-    filename = os.path.join(path, f"{model_name}_seed{seed}.pdf")
-    export_draw(g, filename)
+    filename = os.path.join(path, f"{model_name}_n{n}_seed{seed}.pdf")
+    state = gt.minimize_blockmodel_dl(g)
+    state.draw(output=filename)
+    if rewire:
+        rejection_count = gt.random_rewire(g, n_iter=10)
+        filename = os.path.join(path, f"{model_name}_n{n}_seed{seed}_rewire.pdf")
+        state = gt.minimize_blockmodel_dl(g)
+        state.draw(output=filename)
 
 
 def find_instances_with_communities(n, params, n_instances, path, method="blocks"):
@@ -323,6 +345,33 @@ def find_instances_with_communities(n, params, n_instances, path, method="blocks
             if method == "blocks":
                 state.draw(output=filename)
             elif method == "potts":
-                gt.graph_draw(g, vertex_fill_color=labels, output=filename)
+                labels = list(labels)
+                print(labels)
+                # Normalised RGB color.
+                # 0->Red, 1->Blue
+                #                red_blue_map = dict((i, (1,1,0)) for i in range(10))
+                red_blue_map = {
+                    0: (0, 0, 0),
+                    1: (1, 0, 0),
+                    2: (0, 1, 0),
+                    3: (1, 1, 0),
+                    4: (0, 0, 1),
+                    5: (1, 0, 1),
+                    6: (0, 1, 1),
+                    7: (1, 1, 1),
+                }
+                # Create new vertex property
+                plot_color = g.new_vertex_property("vector<double>")
+                # add that property to graph
+                g.vertex_properties["plot_color"] = plot_color
+                # assign a value to that property for each node of that graph
+                for v in g.vertices():
+                    plot_color[v] = red_blue_map[labels[int(v)]]
+                gt.graph_draw(
+                    g,
+                    vertex_fill_color=g.vertex_properties["plot_color"],
+                    output=filename,
+                )
+            #                gt.graph_draw(g, vertex_fill_color=dict(zip(range(len(labels)), labels)), output=filename)
             count += 1
         seed += 1
