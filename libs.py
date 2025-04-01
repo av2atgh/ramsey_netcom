@@ -3,6 +3,14 @@ import json
 import numpy as np
 import graph_tool.all as gt
 import igraph as ig
+import networkx as nx
+from infomap import Infomap
+
+
+def generator_regular(n, params, seed):
+    K = params["K"]
+    G = nx.random_regular_graph(K, n, seed=seed)
+    return [list(G.neighbors(i)) for i in G.nodes]
 
 
 def generator_bubbles(n, params, seed):
@@ -64,46 +72,37 @@ def watts_strogatz(n, params, seed):
     for i in range(n):
         for j in i + K:
             if np.random.random() < p:
-                j = np.random.randint(n)
-                while j in neighbours[i]:
-                    j = np.random.randint(n)
+                j_ = np.random.randint(n)
+                while j_ in neighbours[i] and j_ == i:
+                    j_ = np.random.randint(n)
             else:
-                j = j - n if j > n - 1 else j
-            neighbours[i].append(j)
-            neighbours[j].append(i)
+                j_ = j - n if j > n - 1 else j
+            neighbours[i].append(j_)
+            neighbours[j_].append(i)
     return neighbours
 
 
-def watts_strogatz_vec(n, params, seed):
-    K = np.array(params["K"])
-    p = params["p"]
-    x = np.random.randint(n, size=(n, K.size))
-    y = np.repeat((np.arange(n))[:, np.newaxis], K.size, axis=1) + np.repeat(
-        K[np.newaxis, :], n, axis=0
-    )
-    y = np.where(y < n, y, y - n)
-    z = np.random.binomial(1, p, size=(n, K.size))
-    return list(np.where(z == 1, x, y))
-
-
 def generator_barabasi_albert(n, params, seed):
-    """Barabasi-Albert model with m new links per node."""
+    """Barabasi-Albert model with m new links per node and baseline attractiveness a."""
     m = params["m"]
-    neighbours = [[1], [0]]
-    replicas = [0, 1]
+    a = params["a"] if "a" in params else m
+    founders = set(range(m + 1))
+    neighbours = [list(founders - {i}) for i in range(m + 1)]
+    replicas = [i for i in range(m + 1) for _ in range(a)]
     np.random.seed(seed=seed)
-    for i in range(2, n):
+    for i in range(m + 1, n):
         n_replicas = len(replicas)
         new_neighbours = []
-        for u in range(min(m, i)):
-            v = np.random.randint(n_replicas)
-            j = replicas[v]
+        for u in range(m):
+            r = np.random.randint(n_replicas)
+            j = replicas[r]
             while i in neighbours[j]:
-                v = np.random.randint(n_replicas)
-                j = replicas[v]
+                r = np.random.randint(n_replicas)
+                j = replicas[r]
             new_neighbours.append(j)
             neighbours[j].append(i)
-            replicas += [i, j]
+            replicas += [j]
+        replicas += [i] * a
         neighbours.append(new_neighbours)
     return neighbours
 
@@ -160,29 +159,21 @@ def generator_dup_divergence(n, params, seed):
     p = params["p"] if "p" in params else 0
     q = params["q"]
     neighbours = [[1], [0]]
-    is_duplicate = np.random.random(n) < q
+    connect_duplicates = np.random.random(size=n) < p
     for i in range(2, n):
         j = np.random.randint(i)
-        node = np.array([i, j])
-        neighbours_ = np.array(neighbours[j])
-        m = np.random.binomial(neighbours_.size, q)
-        if m > 0:
-            choice = node[np.random.randint(2, size=m)]
-        if is_duplicate[i]:
-            for k in neighbours[j]:
-                neighbours[k].append(i)
-            new_neighbours = [k for k in neighbours[j]]
-            if p > 0 and np.random.random() < p:
-                neighbours[j].append(i)
-                new_neighbours.append(j)
-        else:
-            l = np.random.randint(len(neighbours[j]))
-            k = neighbours[j][l]
-            m = neighbours[k].index(j)
-            neighbours[j][l] = i
-            neighbours[k][m] = i
-            new_neighbours = [j, k]
-        neighbours.append(new_neighbours)
+        selected_neighbours = np.random.permutation(neighbours[j])
+        n_neighbours = len(selected_neighbours)
+        m = np.random.binomial(n_neighbours, 1 - q)
+        while m == 0:
+            m = np.random.binomial(n_neighbours, 1 - q)
+        new_neighbours = list(selected_neighbours[:m])
+        for k in new_neighbours:
+            neighbours[k].append(i)
+        if connect_duplicates[i]:
+            neighbours[j].append(i)
+            new_neighbours.append(j)
+        neighbours.append(list(new_neighbours))
     return neighbours
 
 
@@ -191,8 +182,8 @@ def generator(n, params, seed):
         neighbours = random_graph(n, params, seed)
     elif params["model-"] == "ws":
         neighbours = watts_strogatz(n, params, seed)
-    elif params["model-"] == "wsv":
-        neighbours = watts_strogatz_vec(n, params, seed)
+    elif params["model-"] == "dd":
+        neighbours = generator_dup_divergence(n, params, seed)
     elif params["model-"] == "ds":
         neighbours = generator_dup_split(n, params, seed)
     elif params["model-"] == "ba":
@@ -201,6 +192,8 @@ def generator(n, params, seed):
         neighbours = generator_local_search(n, params, seed)
     elif params["model-"] == "bb":
         neighbours = generator_bubbles(n, params, seed)
+    elif params["model-"] == "regular":
+        neighbours = generator_regular(n, params, seed)
     return neighbours
 
 
@@ -233,15 +226,26 @@ def get_n_communities(g, method="blocks"):
     if method == "blocks":
         state = gt.minimize_blockmodel_dl(g)
         labels = state.get_blocks()
+    elif method == "blocks-nodeg":
+        state = gt.minimize_blockmodel_dl(g, state_args=dict(deg_corr=False))
+        labels = state.get_blocks()
     elif method == "modularity":
-        state = gt.ModularityState(g)
-        for beta in [1, 10, 100, 1000]:
-            state.gibbs_sweep(beta=beta, niter=10)
-        labels = state.b.fa
+        gx = nx.from_edgelist([(s, t) for s, t, i in g.iter_edges([g.edge_index])])
+        communities = nx.community.louvain_communities(gx)
+        labels = np.empty(g.num_vertices(), dtype=int)
+        for c in range(len(communities)):
+            labels[np.array(list(communities[c]))] = c
+        state = None
     elif method == "potts":
         g_ = ig.Graph.from_graph_tool(g)
-        state = g_.community_spinglass(gamma=1, update_rule="config")
+        state = g_.community_spinglass(gamma=0.1, update_rule="config")
         labels = state.membership
+    elif method == "infomap":
+        im = Infomap(silent=True)
+        im.add_links([(s, t) for s, t, i in g.iter_edges([g.edge_index])])
+        im.run()
+        state = None
+        labels = [node.module_id for node in im.nodes]
     return g, state, labels, len(np.unique(labels))
 
 
@@ -250,30 +254,36 @@ def get_n_communities_from_neighbours(neighbours, method="blocks", directed=Fals
     return get_n_communities(g, method=method)
 
 
-def n_instances_with_cummunities(n, params, nr, method="blocks"):
+def n_instances_with_cummunities(n, params, nr, method="blocks", rewire=0):
     c = np.empty(nr, dtype=int)
     for r in range(nr):
         neighbours = generator(n, params, seed=r)
-        g, state, labels, n_communities = get_n_communities_from_neighbours(
-            neighbours, method=method
-        )
+        g = graphtool_from_neighbours(neighbours, directed=False)
+        if rewire > 0:
+            rejection_count = gt.random_rewire(g, n_iter=rewire)
+        g, state, labels, n_communities = get_n_communities(g, method=method)
         c[r] = n_communities
     return c
 
 
-def ramsey_community_number(params, epsilon, nr, n0=10, method="blocks"):
+def ramsey_community_number(params, epsilon, nr, n0=10, method="blocks", rewire=0):
     """Estimates the Ramsey community number of a graph."""
     nr_95 = int((1 - epsilon) * nr)
     # find upper bound, some n satisfying nr_c >= nr_95
     n = n0
-    nr_c = np.sum(n_instances_with_cummunities(n, params, nr, method=method) > 1)
+    nr_c = np.sum(
+        n_instances_with_cummunities(n, params, nr, method=method, rewire=rewire) > 1
+    )
     if nr_c > nr_95:
         # n0 is an upper bound, find lower bound
         while nr_c > nr_95:
             n_right = n
             n = n // 2
             nr_c = np.sum(
-                n_instances_with_cummunities(n, params, nr, method=method) > 1
+                n_instances_with_cummunities(
+                    n, params, nr, method=method, rewire=rewire
+                )
+                > 1
             )
             print(f"[{n}, {n_right}], fraction with communities: {nr_c/nr} ...")
         n_left = n
@@ -283,7 +293,10 @@ def ramsey_community_number(params, epsilon, nr, n0=10, method="blocks"):
             n_left = n
             n *= 2
             nr_c = np.sum(
-                n_instances_with_cummunities(n, params, nr, method=method) > 1
+                n_instances_with_cummunities(
+                    n, params, nr, method=method, rewire=rewire
+                )
+                > 1
             )
             print(f"[{n_left}, {n}], fraction with communities: {nr_c/nr} ...")
         n_right = n
@@ -300,7 +313,10 @@ def ramsey_community_number(params, epsilon, nr, n0=10, method="blocks"):
             n = (n_left + n_right) // 2
             nr_c_previous = nr_c
             nr_c = np.sum(
-                n_instances_with_cummunities(n, params, nr, method=method) > 1
+                n_instances_with_cummunities(
+                    n, params, nr, method=method, rewire=rewire
+                )
+                > 1
             )
             if nr_c >= nr_95:
                 n_right = n
@@ -309,7 +325,10 @@ def ramsey_community_number(params, epsilon, nr, n0=10, method="blocks"):
         if nr_c < nr_95:
             n += 1
             nr_c = np.sum(
-                n_instances_with_cummunities(n, params, nr, method=method) > 1
+                n_instances_with_cummunities(
+                    n, params, nr, method=method, rewire=rewire
+                )
+                > 1
             )
     print(
         f"binary search: [{n_left}, {n_right}], r_c: {n}, fraction with communities: {nr_c/nr}"
@@ -317,7 +336,7 @@ def ramsey_community_number(params, epsilon, nr, n0=10, method="blocks"):
     return n
 
 
-def draw_instance(n, params, seed, path, rewire=False):
+def draw_instance(n, params, seed, path, rewire=0):
     """Auxiliary method to draw a graph instance."""
     neighbours = generator(n, params, seed)
     g = graphtool_from_neighbours(neighbours)
@@ -325,9 +344,11 @@ def draw_instance(n, params, seed, path, rewire=False):
     filename = os.path.join(path, f"{model_name}_n{n}_seed{seed}.pdf")
     state = gt.minimize_blockmodel_dl(g)
     state.draw(output=filename)
-    if rewire:
-        rejection_count = gt.random_rewire(g, n_iter=10)
-        filename = os.path.join(path, f"{model_name}_n{n}_seed{seed}_rewire.pdf")
+    if rewire > 0:
+        rejection_count = gt.random_rewire(g, n_iter=rewire)
+        filename = os.path.join(
+            path, f"{model_name}_n{n}_seed{seed}_rewire{rewire}.pdf"
+        )
         state = gt.minimize_blockmodel_dl(g)
         state.draw(output=filename)
 
@@ -339,7 +360,9 @@ def find_instances_with_communities(n, params, n_instances, path, method="blocks
     count = 0
     while count < n_instances:
         neighbours = generator(n, params, seed)
-        g, state, labels, n_communities = get_n_communities(neighbours, method=method)
+        g, state, labels, n_communities = get_n_communities_from_neighbours(
+            neighbours, method=method
+        )
         if n_communities > 1:
             filename = os.path.join(path, f"{model_name}_n{n}_seed{seed}_{method}.pdf")
             if method == "blocks":
