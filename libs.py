@@ -7,6 +7,12 @@ import networkx as nx
 from infomap import Infomap
 
 
+def generator_gnk_random_graph(n, params, seed):
+    K = params["K"]
+    G = nx.gnm_random_graph(n, K * n, seed=seed)
+    return [list(G.neighbors(i)) for i in G.nodes]
+
+
 def generator_regular(n, params, seed):
     K = params["K"]
     G = nx.random_regular_graph(K, n, seed=seed)
@@ -36,19 +42,68 @@ def generator_bubbles(n, params, seed):
     return neighbours
 
 
-def random_graph(n, params, seed):
-    """Erdos-Renyi random graph model with M edges."""
-    np.random.seed(seed=seed)
-    M = params["M"]
+def generator_big_bubbles(n, params, seed):
+    """A chain of L nodes is attached to two distinct nodes, any distance appart
+    - conjecture: this model breaks locality and does not has the emergent communities property (based on simulations)
+    """
+    L = params["L"]
     neighbours = [[] for i in range(n)]
-    for l in range(M):
-        i = np.random.randint(n)
-        j = np.random.randint(n)
-        while i in neighbours[j]:
-            i = np.random.randint(n)
-            j = np.random.randint(n)
-        neighbours[i].append(j)
-        neighbours[j].append(i)
+    neighbours[0].append(1)
+    neighbours[1].append(0)
+    i = 2
+    while i < n:
+        j = np.random.randint(i)
+        k = np.random.randint(i)
+        while k == j:
+            k = np.random.randint(i)
+        new_neighbours = [j] + list(range(i, i + L)) + [k]
+        for l in range(1, L + 2):
+            j = new_neighbours[l - 1]
+            k = new_neighbours[l]
+            if j < n and k < n:
+                neighbours[j].append(k)
+                neighbours[k].append(j)
+        i += L
+    return neighbours
+
+
+def generator_bubbles_2(n, params, seed):
+    """A chain of L nodes is attached to two distinct nodes at most W steps appart.
+    - for W = 1 reduces to the bubble model
+    - very slow, calculates A^W to identify nodes at most W steps appart
+    - conjecture: has the mergent community property if and only if W in [1, 2] (based on simulations up to n=1280)
+    """
+    L = params["L"]
+    W = params["W"]
+    neighbours = [[] for i in range(n)]
+    A = np.zeros((n, n), dtype=np.int8)
+    neighbours[0].append(1)
+    neighbours[1].append(0)
+    A[0, 1] = 1
+    A[1, 0] = 1
+    i = 2
+    while i < n:
+        Ai = A[:i, :i]
+        An = np.copy(Ai)
+        AW = np.copy(Ai)
+        for l in range(W):
+            An = np.dot(An, Ai)
+            AW = np.maximum(An, AW)
+        np.fill_diagonal(AW, 0)
+        paths = np.nonzero(AW)
+        l = np.random.randint(len(paths[0]))
+        j = paths[0][l]
+        k = paths[1][l]
+        new_neighbours = [j] + list(range(i, i + L)) + [k]
+        for l in range(1, L + 2):
+            j = new_neighbours[l - 1]
+            k = new_neighbours[l]
+            if j < n and k < n:
+                A[j, k] = 1
+                A[k, j] = 1
+                neighbours[j].append(k)
+                neighbours[k].append(j)
+        i += L
     return neighbours
 
 
@@ -177,9 +232,14 @@ def generator_dup_divergence(n, params, seed):
     return neighbours
 
 
+def generator_dorogovtsev_goltsev_mendes(n, params, seed):
+    G = nx.dorogovtsev_goltsev_mendes_graph(n)
+    return [list(G.neighbors(i)) for i in G.nodes]
+
+
 def generator(n, params, seed):
-    if params["model-"] == "er":
-        neighbours = random_graph(n, params, seed)
+    if params["model-"] == "gnk":
+        neighbours = generator_gnk_random_graph(n, params, seed)
     elif params["model-"] == "ws":
         neighbours = watts_strogatz(n, params, seed)
     elif params["model-"] == "dd":
@@ -192,8 +252,14 @@ def generator(n, params, seed):
         neighbours = generator_local_search(n, params, seed)
     elif params["model-"] == "bb":
         neighbours = generator_bubbles(n, params, seed)
+    elif params["model-"] == "bb2":
+        neighbours = generator_bubbles_2(n, params, seed)
+    elif params["model-"] == "bbb":
+        neighbours = generator_big_bubbles(n, params, seed)
     elif params["model-"] == "regular":
         neighbours = generator_regular(n, params, seed)
+    elif params["model-"] == "dgm":
+        neighbours = generator_dorogovtsev_goltsev_mendes(n, params, seed)
     return neighbours
 
 
@@ -254,7 +320,7 @@ def get_n_communities_from_neighbours(neighbours, method="blocks", directed=Fals
     return get_n_communities(g, method=method)
 
 
-def n_instances_with_cummunities(n, params, nr, method="blocks", rewire=0):
+def n_instances_with_cummunities(n, params, nr, method, rewire):
     c = np.empty(nr, dtype=int)
     for r in range(nr):
         neighbours = generator(n, params, seed=r)
@@ -266,25 +332,26 @@ def n_instances_with_cummunities(n, params, nr, method="blocks", rewire=0):
     return c
 
 
-def ramsey_community_number(params, epsilon, nr, n0=10, method="blocks", rewire=0):
+def count_wc(n, params, nr, method, rewire, kappa):
+    c = n_instances_with_cummunities(n, params, nr, method, rewire)
+    print(np.sort(c))
+    return np.sum(c >= kappa)
+
+
+def ramsey_community_number(
+    params, epsilon, nr, n0=10, method="blocks", rewire=0, kappa=2
+):
     """Estimates the Ramsey community number of a graph."""
     nr_95 = int((1 - epsilon) * nr)
     # find upper bound, some n satisfying nr_c >= nr_95
     n = n0
-    nr_c = np.sum(
-        n_instances_with_cummunities(n, params, nr, method=method, rewire=rewire) > 1
-    )
+    nr_c = count_wc(n, params, nr, method, rewire, kappa)
     if nr_c > nr_95:
         # n0 is an upper bound, find lower bound
         while nr_c > nr_95:
             n_right = n
             n = n // 2
-            nr_c = np.sum(
-                n_instances_with_cummunities(
-                    n, params, nr, method=method, rewire=rewire
-                )
-                > 1
-            )
+            nr_c = count_wc(n, params, nr, method, rewire, kappa)
             print(f"[{n}, {n_right}], fraction with communities: {nr_c/nr} ...")
         n_left = n
     elif nr_c < nr_95:
@@ -292,16 +359,11 @@ def ramsey_community_number(params, epsilon, nr, n0=10, method="blocks", rewire=
         while nr_c < nr_95:
             n_left = n
             n *= 2
-            nr_c = np.sum(
-                n_instances_with_cummunities(
-                    n, params, nr, method=method, rewire=rewire
-                )
-                > 1
-            )
+            nr_c = count_wc(n, params, nr, method, rewire, kappa)
             print(f"[{n_left}, {n}], fraction with communities: {nr_c/nr} ...")
         n_right = n
     else:
-        # nothng to do
+        # nothing to do
         n_left = nr_c
         n_right = nr_c
     if n_left != n_right:
@@ -312,24 +374,14 @@ def ramsey_community_number(params, epsilon, nr, n0=10, method="blocks", rewire=
             )
             n = (n_left + n_right) // 2
             nr_c_previous = nr_c
-            nr_c = np.sum(
-                n_instances_with_cummunities(
-                    n, params, nr, method=method, rewire=rewire
-                )
-                > 1
-            )
+            nr_c = count_wc(n, params, nr, method, rewire, kappa)
             if nr_c >= nr_95:
                 n_right = n
             else:
                 n_left = n
         if nr_c < nr_95:
             n += 1
-            nr_c = np.sum(
-                n_instances_with_cummunities(
-                    n, params, nr, method=method, rewire=rewire
-                )
-                > 1
-            )
+            nr_c = count_wc(n, params, nr, method, rewire, kappa)
     print(
         f"binary search: [{n_left}, {n_right}], r_c: {n}, fraction with communities: {nr_c/nr}"
     )
