@@ -107,6 +107,36 @@ def generator_bubbles_2(n, params, seed):
     return neighbours
 
 
+def generator_bubbles_deterministic(n_generations, params, seed):
+    """A chain of L nodes is attached to the nodes at the end of every link in the network.
+    - number of nodes increases as n = (3^n_generations + 1) / 2
+    """
+    L = params["L"]
+    n = (2 + L + L * (L + 2) ** n_generations) // (L + 1)
+    neighbours = [[] for i in range(n)]
+    neighbours[0].append(1)
+    neighbours[1].append(0)
+    edges = [(0, 1)]
+    i = 2
+    g = 0
+    while g < n_generations:
+        edges_current = edges.copy()
+        for e in edges_current:
+            j = e[0]
+            k = e[1]
+            new_neighbours = [j] + list(range(i, i + L)) + [k]
+            for l in range(1, L + 2):
+                j = new_neighbours[l - 1]
+                k = new_neighbours[l]
+                edges.append((j, k))
+                if j < n and k < n:
+                    neighbours[j].append(k)
+                    neighbours[k].append(j)
+            i += L
+        g += 1
+    return neighbours
+
+
 def watts_strogatz(n, params, seed):
     """An extension of the Watts-Strogatz model.
     Input
@@ -256,6 +286,8 @@ def generator(n, params, seed):
         neighbours = generator_bubbles_2(n, params, seed)
     elif params["model-"] == "bbb":
         neighbours = generator_big_bubbles(n, params, seed)
+    elif params["model-"] == "bbd":
+        neighbours = generator_bubbles_deterministic(n, params, seed)
     elif params["model-"] == "regular":
         neighbours = generator_regular(n, params, seed)
     elif params["model-"] == "dgm":
@@ -307,7 +339,7 @@ def get_n_communities(g, method="blocks"):
         state = g_.community_spinglass(gamma=0.1, update_rule="config")
         labels = state.membership
     elif method == "infomap":
-        im = Infomap(silent=True)
+        im = Infomap(silent=True, regularized=True)
         im.add_links([(s, t) for s, t, i in g.iter_edges([g.edge_index])])
         im.run()
         state = None
@@ -405,7 +437,9 @@ def draw_instance(n, params, seed, path, rewire=0):
         state.draw(output=filename)
 
 
-def find_instances_with_communities(n, params, n_instances, path, method="blocks"):
+def find_instances_with_communities(
+    n, params, n_instances, path, method="blocks", has_communities=True
+):
     """Auxiliary method to find and draw instances with 2 or more communities."""
     model_name = get_model_name(params)
     seed = 0
@@ -415,8 +449,17 @@ def find_instances_with_communities(n, params, n_instances, path, method="blocks
         g, state, labels, n_communities = get_n_communities_from_neighbours(
             neighbours, method=method
         )
-        if n_communities > 1:
-            filename = os.path.join(path, f"{model_name}_n{n}_seed{seed}_{method}.pdf")
+        if (has_communities and n_communities > 1) or (
+            not has_communities and n_communities == 1
+        ):
+            if has_communities:
+                filename = os.path.join(
+                    path, f"{model_name}_n{n}_seed{seed}_{method}.pdf"
+                )
+            else:
+                filename = os.path.join(
+                    path, f"{model_name}_n{n}_seed{seed}_{method}_no_com.pdf"
+                )
             if method == "blocks":
                 state.draw(output=filename)
             elif method == "potts":
