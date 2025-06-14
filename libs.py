@@ -5,6 +5,7 @@ import graph_tool.all as gt
 import igraph as ig
 import networkx as nx
 from infomap import Infomap
+from ramsey_netcom.hgc import hgc
 
 
 def generator_gnk_random_graph(n, params, seed):
@@ -104,6 +105,59 @@ def generator_bubbles_2(n, params, seed):
                 neighbours[j].append(k)
                 neighbours[k].append(j)
         i += L
+    return neighbours
+
+
+def generator_bubbles_2_L1_W2(n, params, seed):
+    """A chain of L=1 nodes is attached to two distinct nodes at most W=2 steps appart.
+    - conjecture: has the mergent community property
+    """
+    neighbours = [[] for i in range(n)]
+    neighbours[0].append(1)
+    neighbours[1].append(0)
+    pairs = set([frozenset([0, 1])])
+    i = 2
+    while i < n:
+        j1, j2 = tuple(np.random.choice(list(pairs)))
+        n2_j = set([j1, j2] + neighbours[j1] + neighbours[j2])
+        pairs = pairs.union(set([frozenset([i, k]) for k in n2_j]))
+        neighbours[j1].append(i)
+        neighbours[j2].append(i)
+        neighbours[i].append(j1)
+        neighbours[i].append(j2)
+        i += 1
+    return neighbours
+
+
+def generator_bubbles_2_L1_W3(n, params, seed):
+    """A chain of L nodes is attached to two distinct nodes at most W=3 steps appart.
+    - conjecture: does bot has the mergent community property
+    """
+    neighbours = [[] for i in range(n)]
+    neighbours[0].append(1)
+    neighbours[1].append(0)
+    pairs = set([frozenset([0, 1])])
+    i = 2
+    while i < n:
+        j1, j2 = tuple(np.random.choice(list(pairs)))
+        n2_j = set([j1, j2] + neighbours[j1] + neighbours[j2])
+        for k in neighbours[j1]:
+            n2_j = n2_j.union(set(neighbours[k]))
+        for k in neighbours[j2]:
+            n2_j = n2_j.union(set(neighbours[k]))
+        pairs = pairs.union(set([frozenset([i, k]) for k in n2_j]))
+        pairs = pairs.union(
+            set([frozenset([j1, k]) for k in neighbours[j2] if j1 != k])
+        )
+        pairs = pairs.union(
+            set([frozenset([j2, k]) for k in neighbours[j1] if j2 != k])
+        )
+        neighbours[j1].append(i)
+        neighbours[j2].append(i)
+        neighbours[i].append(j1)
+        neighbours[i].append(j2)
+        i += 1
+    print(len(pairs) / (n * (n - 1) / 2))
     return neighbours
 
 
@@ -283,7 +337,12 @@ def generator(n, params, seed):
     elif params["model-"] == "bb":
         neighbours = generator_bubbles(n, params, seed)
     elif params["model-"] == "bb2":
-        neighbours = generator_bubbles_2(n, params, seed)
+        if params["L"] == 1 and params["W"] == 2:
+            neighbours = generator_bubbles_2_L1_W2(n, params, seed)
+        elif params["L"] == 1 and params["W"] == 3:
+            neighbours = generator_bubbles_2_L1_W3(n, params, seed)
+        else:
+            neighbours = generator_bubbles_2(n, params, seed)
     elif params["model-"] == "bbb":
         neighbours = generator_big_bubbles(n, params, seed)
     elif params["model-"] == "bbd":
@@ -320,7 +379,7 @@ def igraph_from_neighbours(neighbours, directed=False):
     return ig.Graph(n=n, edges=edges, directed=directed)
 
 
-def get_n_communities(g, method="blocks"):
+def get_n_communities(g, method="blocks", neighbours=None):
     if method == "blocks":
         state = gt.minimize_blockmodel_dl(g)
         labels = state.get_blocks()
@@ -344,6 +403,13 @@ def get_n_communities(g, method="blocks"):
         im.run()
         state = None
         labels = [node.module_id for node in im.nodes]
+    elif method == "hgc":
+        edge2nodes = neighbours
+        node2edges = neighbours
+        n_instances = 1
+        n_groups_max = 10
+        p, labels = hgc(edge2nodes, node2edges, n_groups_max, n_instances)
+        state = None
     return g, state, labels, len(np.unique(labels))
 
 
@@ -359,14 +425,15 @@ def n_instances_with_cummunities(n, params, nr, method, rewire):
         g = graphtool_from_neighbours(neighbours, directed=False)
         if rewire > 0:
             rejection_count = gt.random_rewire(g, n_iter=rewire)
-        g, state, labels, n_communities = get_n_communities(g, method=method)
+        g, state, labels, n_communities = get_n_communities(
+            g, method=method, neighbours=neighbours
+        )
         c[r] = n_communities
     return c
 
 
 def count_wc(n, params, nr, method, rewire, kappa):
     c = n_instances_with_cummunities(n, params, nr, method, rewire)
-    print(np.sort(c))
     return np.sum(c >= kappa)
 
 
