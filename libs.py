@@ -115,12 +115,12 @@ def generator_bubbles_2_L1_W2(n, params, seed):
     neighbours = [[] for i in range(n)]
     neighbours[0].append(1)
     neighbours[1].append(0)
-    pairs = set([frozenset([0, 1])])
+    pairs = [(0, 1)]
     i = 2
     while i < n:
-        j1, j2 = tuple(np.random.choice(list(pairs)))
-        n2_j = set([j1, j2] + neighbours[j1] + neighbours[j2])
-        pairs = pairs.union(set([frozenset([i, k]) for k in n2_j]))
+        j1, j2 = pairs[np.random.randint(len(pairs))]
+        n2_j = np.unique([j1, j2] + neighbours[j1] + neighbours[j2])
+        pairs = pairs + [(k, i) for k in n2_j]
         neighbours[j1].append(i)
         neighbours[j2].append(i)
         neighbours[i].append(j1)
@@ -145,19 +145,18 @@ def generator_bubbles_2_L1_W3(n, params, seed):
             n2_j = n2_j.union(set(neighbours[k]))
         for k in neighbours[j2]:
             n2_j = n2_j.union(set(neighbours[k]))
-        pairs = pairs.union(set([frozenset([i, k]) for k in n2_j]))
+        pairs = pairs.union(set([frozenset([k, i]) for k in n2_j]))
         pairs = pairs.union(
-            set([frozenset([j1, k]) for k in neighbours[j2] if j1 != k])
+            set([frozenset([j1, k]) for k in neighbours[j2] if k != j1])
         )
         pairs = pairs.union(
-            set([frozenset([j2, k]) for k in neighbours[j1] if j2 != k])
+            set([frozenset([j2, k]) for k in neighbours[j1] if k != j2])
         )
         neighbours[j1].append(i)
         neighbours[j2].append(i)
         neighbours[i].append(j1)
         neighbours[i].append(j2)
         i += 1
-    print(len(pairs) / (n * (n - 1) / 2))
     return neighbours
 
 
