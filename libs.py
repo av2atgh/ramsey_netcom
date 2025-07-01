@@ -378,7 +378,9 @@ def igraph_from_neighbours(neighbours, directed=False):
     return ig.Graph(n=n, edges=edges, directed=directed)
 
 
-def get_n_communities(g, method="blocks", neighbours=None):
+def get_n_communities(g, method="blocks", neighbours=None, line_graph=False):
+    if line_graph:
+        g, vmap = gt.line_graph(g)
     if method == "blocks":
         state = gt.minimize_blockmodel_dl(g)
         labels = state.get_blocks()
@@ -412,12 +414,14 @@ def get_n_communities(g, method="blocks", neighbours=None):
     return g, state, labels, len(np.unique(labels))
 
 
-def get_n_communities_from_neighbours(neighbours, method="blocks", directed=False):
+def get_n_communities_from_neighbours(
+    neighbours, method="blocks", directed=False, line_graph=False
+):
     g = graphtool_from_neighbours(neighbours, directed=directed)
-    return get_n_communities(g, method=method)
+    return get_n_communities(g, line_graph, method=method)
 
 
-def n_instances_with_cummunities(n, params, nr, method, rewire):
+def n_instances_with_cummunities(n, params, nr, method, rewire, line_graph):
     c = np.empty(nr, dtype=int)
     for r in range(nr):
         neighbours = generator(n, params, seed=r)
@@ -425,31 +429,31 @@ def n_instances_with_cummunities(n, params, nr, method, rewire):
         if rewire > 0:
             rejection_count = gt.random_rewire(g, n_iter=rewire)
         g, state, labels, n_communities = get_n_communities(
-            g, method=method, neighbours=neighbours
+            g, method=method, neighbours=neighbours, line_graph=line_graph
         )
         c[r] = n_communities
     return c
 
 
-def count_wc(n, params, nr, method, rewire, kappa):
-    c = n_instances_with_cummunities(n, params, nr, method, rewire)
+def count_wc(n, params, nr, method, rewire, kappa, line_graph):
+    c = n_instances_with_cummunities(n, params, nr, method, rewire, line_graph)
     return np.sum(c >= kappa)
 
 
 def ramsey_community_number(
-    params, epsilon, nr, n0=10, method="blocks", rewire=0, kappa=2
+    params, epsilon, nr, n0=10, method="blocks", rewire=0, kappa=2, line_graph=False
 ):
     """Estimates the Ramsey community number of a graph."""
     nr_95 = int((1 - epsilon) * nr)
     # find upper bound, some n satisfying nr_c >= nr_95
     n = n0
-    nr_c = count_wc(n, params, nr, method, rewire, kappa)
+    nr_c = count_wc(n, params, nr, method, rewire, kappa, line_graph)
     if nr_c > nr_95:
         # n0 is an upper bound, find lower bound
         while nr_c > nr_95:
             n_right = n
             n = n // 2
-            nr_c = count_wc(n, params, nr, method, rewire, kappa)
+            nr_c = count_wc(n, params, nr, method, rewire, kappa, line_graph)
             print(f"[{n}, {n_right}], fraction with communities: {nr_c/nr} ...")
         n_left = n
     elif nr_c < nr_95:
@@ -457,7 +461,7 @@ def ramsey_community_number(
         while nr_c < nr_95:
             n_left = n
             n *= 2
-            nr_c = count_wc(n, params, nr, method, rewire, kappa)
+            nr_c = count_wc(n, params, nr, method, rewire, kappa, line_graph)
             print(f"[{n_left}, {n}], fraction with communities: {nr_c/nr} ...")
         n_right = n
     else:
@@ -472,14 +476,14 @@ def ramsey_community_number(
             )
             n = (n_left + n_right) // 2
             nr_c_previous = nr_c
-            nr_c = count_wc(n, params, nr, method, rewire, kappa)
+            nr_c = count_wc(n, params, nr, method, rewire, kappa, line_graph)
             if nr_c >= nr_95:
                 n_right = n
             else:
                 n_left = n
         if nr_c < nr_95:
             n += 1
-            nr_c = count_wc(n, params, nr, method, rewire, kappa)
+            nr_c = count_wc(n, params, nr, method, rewire, kappa, line_graph)
     print(
         f"binary search: [{n_left}, {n_right}], r_c: {n}, fraction with communities: {nr_c/nr}"
     )
@@ -504,7 +508,13 @@ def draw_instance(n, params, seed, path, rewire=0):
 
 
 def find_instances_with_communities(
-    n, params, n_instances, path, method="blocks", has_communities=True
+    n,
+    params,
+    n_instances,
+    path,
+    method="blocks",
+    has_communities=True,
+    line_graph=False,
 ):
     """Auxiliary method to find and draw instances with 2 or more communities."""
     model_name = get_model_name(params)
@@ -513,7 +523,8 @@ def find_instances_with_communities(
     while count < n_instances:
         neighbours = generator(n, params, seed)
         g, state, labels, n_communities = get_n_communities_from_neighbours(
-            neighbours, method=method
+            neighbours,
+            method=method,
         )
         if (has_communities and n_communities > 1) or (
             not has_communities and n_communities == 1
