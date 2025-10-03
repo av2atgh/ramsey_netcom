@@ -6,6 +6,16 @@ import igraph as ig
 import networkx as nx
 from infomap import Infomap
 from ramsey_netcom.hgc import hgc
+from scipy.signal import argrelmax
+
+
+def generator_ring(n, params, seed):
+    mod = params["mod"]
+    neighbours = [[i + 1] for i in range(n - 1)] + [[0]]
+    for l in range(n // mod):
+        i = mod * l
+        neighbours[i].append(i + 2 if i < n - 2 else 0)
+    return neighbours
 
 
 def generator_gnk_random_graph(n, params, seed):
@@ -20,17 +30,44 @@ def generator_regular(n, params, seed):
     return [list(G.neighbors(i)) for i in G.nodes]
 
 
+def generator_triadic_closure(n, params, seed):
+    p = params["p"]
+    np.random.seed(seed)
+    neighbours = [[1], [0]] + [[] for i in range(2, n)]
+    bound = np.arange(2, n)
+    first = np.random.randint(bound)
+    second = np.random.randint(bound)
+    while (second == first).any():
+        second[second == first] = np.random.randint(bound[second == first])
+    local = np.random.random(n - 2) < p
+    for i in range(2, n):
+        j = first[i - 2]
+        k = np.random.choice(neighbours[j]) if local[i - 2] else second[i - 2]
+        neighbours[i].append(j)
+        neighbours[j].append(i)
+        neighbours[i].append(k)
+        neighbours[k].append(i)
+    return neighbours
+
+
 def generator_bubbles(n, params, seed):
     L = params["L"]
+    p = params["p"] if "p" in params else 1
+    n_bubbles_min = (n - 2) // L
+    n_bubbles = n_bubbles_min + 1 if np.fmod(n - 2, L) else n_bubbles_min
+    n = 2 + n_bubbles * L
     neighbours = [[] for i in range(n)]
     neighbours[0].append(1)
     neighbours[1].append(0)
     edges = [(0, 1)]
     i = 2
+    np.random.seed(seed)
     while i < n:
-        e = np.random.randint(len(edges))
-        j = edges[e][0]
-        k = edges[e][1]
+        j, k = (
+            edges[np.random.randint(len(edges))]
+            if p == 1 or np.random.random() < p
+            else tuple(np.random.choice(np.arange(i), size=2, replace=False))
+        )
         new_neighbours = [j] + list(range(i, i + L)) + [k]
         for l in range(1, L + 2):
             j = new_neighbours[l - 1]
@@ -40,6 +77,108 @@ def generator_bubbles(n, params, seed):
                 neighbours[j].append(k)
                 neighbours[k].append(j)
         i += L
+    return neighbours
+
+
+def generator_bubbles_L1(n, params, seed):
+    L = params["L"]
+    p = params["p"] if "p" in params else 1
+    neighbours = [[] for i in range(n)]
+    neighbours[0].append(1)
+    neighbours[1].append(0)
+    edges = [(0, 1)]
+    np.random.seed(seed)
+    for i in range(2, n):
+        j, k = (
+            edges[np.random.randint(len(edges))]
+            if p == 1 or np.random.random() < p
+            else tuple(np.random.choice(np.arange(i), size=2, replace=False))
+        )
+        neighbours[i] = [j, k]
+        neighbours[j].append(i)
+        neighbours[k].append(i)
+        edges.append((i, j))
+        edges.append((i, k))
+    return neighbours
+
+
+def generator_bubbles_L1_split(n, params, seed):
+    np.random.seed(seed)
+    s = params["s"]
+    neighbours = [[1], [0]] + [[] for i in range(2, n)]
+    neighbours[0].append(1)
+    neighbours[1].append(0)
+    edges = [(0, 1)]
+    split = np.random.random(n - 2) < s
+    for i in range(2, n):
+        e = np.random.randint(len(edges))
+        j, k = edges[e]
+        if split[i - 2]:
+            neighbours[j][neighbours[j].index(k)] = i
+            neighbours[k][neighbours[k].index(j)] = i
+            edges[e] = (j, i)
+        else:
+            neighbours[j].append(i)
+            neighbours[k].append(i)
+            edges.append((j, i))
+        neighbours[i] = [j, k]
+        edges.append((k, i))
+    return neighbours
+
+
+def generator_bubbles_L1_ba(n, params, seed):
+    L = params["L"]
+    p = params["p"] if "p" in params else 1
+    neighbours = [[] for i in range(n)]
+    neighbours[0].append(1)
+    neighbours[1].append(0)
+    edges = [(0, 1)]
+    edge_ends = [0, 1]
+    np.random.seed(seed)
+    for i in range(2, n):
+        j, k = (
+            edges[np.random.randint(len(edges))]
+            if p == 1 or np.random.random() < p
+            else tuple(np.random.choice(edge_ends, size=2, replace=False))
+        )
+        neighbours[i] = [j, k]
+        neighbours[j].append(i)
+        neighbours[k].append(i)
+        edges.append((i, j))
+        edges.append((i, k))
+        edge_ends = edge_ends + [i, i, j, k]
+    return neighbours
+
+
+def generator_bubbles_house(n, params, seed):
+    p = params["p"]
+    neighbours = [[] for i in range(n)]
+    neighbours[0].append(1)
+    neighbours[1].append(0)
+    edges = [(0, 1)]
+    np.random.seed(seed)
+    i = 2
+    while i < n:
+        j, k = (
+            edges[np.random.randint(len(edges))]
+            if p == 1 or np.random.random() < p
+            else tuple(np.random.choice(np.arange(i), size=2, replace=False))
+        )
+        neighbours[i] = (
+            [j, i + 1, i + 2] if i + 2 < n else [j, i + 1] if i + 1 < n else [j]
+        )
+        neighbours[j].append(i)
+        edges.append((j, i))
+        if i + 1 < n:
+            neighbours[i + 1] = [i, i + 2] if i + 2 < n else [i]
+            edges.append((i, i + 1))
+        if i + 2 < n:
+            neighbours[i + 2] = [i, i + 1, k]
+            neighbours[k].append(i + 2)
+            edges.append((i, i + 2))
+            edges.append((i + 1, i + 2))
+            edges.append((k, i + 2))
+        i += 3 if i + 2 < n else 2 if i + 1 < n else 1
     return neighbours
 
 
@@ -296,23 +435,88 @@ def generator_dup_divergence(n, params, seed):
     np.random.seed(seed=seed)
     p = params["p"] if "p" in params else 0
     q = params["q"]
-    neighbours = [[1], [0]]
-    connect_duplicates = np.random.random(size=n) < p
+    neighbours = [[1], [0]] + [[] for i in range(2, n)]
     for i in range(2, n):
         j = np.random.randint(i)
-        selected_neighbours = np.random.permutation(neighbours[j])
-        n_neighbours = len(selected_neighbours)
-        m = np.random.binomial(n_neighbours, 1 - q)
+        new_neighbours = np.random.permutation(neighbours[j])
+        m = np.random.binomial(len(neighbours[j]), 1 - q)
         while m == 0:
-            m = np.random.binomial(n_neighbours, 1 - q)
-        new_neighbours = list(selected_neighbours[:m])
-        for k in new_neighbours:
+            m = np.random.binomial(len(neighbours[j]), 1 - q)
+        for k in new_neighbours[:m]:
+            neighbours[i].append(k)
             neighbours[k].append(i)
-        if connect_duplicates[i]:
+        if np.random.random() < p:
+            neighbours[i].append(j)
             neighbours[j].append(i)
-            new_neighbours.append(j)
-        neighbours.append(list(new_neighbours))
     return neighbours
+
+
+def generator_dup_divergence_symmetric(n, params, seed):
+    """Duplication-Split model with duplication rate q."""
+    np.random.seed(seed=seed)
+    p = params["p"] if "p" in params else 0
+    q = params["q"]
+    neighbours = [[1], [0]] + [[] for i in range(2, n)]
+    for i in range(2, n):
+        j = np.random.randint(i)
+        for k in neighbours[j]:
+            if np.random.random() < q:
+                if np.random.random() < 0.5:
+                    neighbours[k].remove(j)
+                    neighbours[j].remove(k)
+                    neighbours[i].append(k)
+                    neighbours[k].append(i)
+            else:
+                neighbours[i].append(k)
+                neighbours[k].append(i)
+        if np.random.random() < p:
+            neighbours[i].append(j)
+            neighbours[j].append(i)
+    return neighbours
+
+
+def nearest_neighbor(n, params, seed=0):
+    u = params["u"]
+
+    def index2tuple(k):
+        i = int(n - 2 - np.floor(np.sqrt(-8 * k + 4 * n * (n - 1) - 7) / 2.0 - 0.5))
+        j = k + i + 1 - (n * (n - 1)) // 2 + ((n - i) * ((n - i) - 1)) // 2
+        return (i, j)
+
+    def tuple2index(i, j):
+        return (n * (n - 1)) // 2 - ((n - i) * ((n - i) - 1)) // 2 + j - i - 1
+
+    neighbors = [[1], [0]] + [[] for i in range(2, n)]
+    potential_edges = []
+    np.random.seed(seed)
+    i = 2
+    while i < n:
+        if np.random.random() < 1 - u:
+            j = np.random.randint(i)
+            potential_edges = potential_edges + [
+                tuple2index(k, i) for k in neighbors[j]
+            ]
+            neighbors[j].append(i)
+            neighbors[i].append(j)
+            i += 1
+        elif potential_edges:
+            l = np.random.randint(len(potential_edges))
+            (j, k) = index2tuple(potential_edges.pop(l))
+            new_potential_edges = {
+                tuple2index(min(l, j), max(l, j))
+                for l in neighbors[k]
+                if l not in neighbors[j]
+            }
+            potential_edges = set(potential_edges).union(new_potential_edges)
+            new_potential_edges = {
+                tuple2index(min(l, k), max(l, k))
+                for l in neighbors[j]
+                if l not in neighbors[k]
+            }
+            potential_edges = list(potential_edges.union(new_potential_edges))
+            neighbors[j].append(k)
+            neighbors[k].append(j)
+    return neighbors
 
 
 def generator_dorogovtsev_goltsev_mendes(n, params, seed):
@@ -321,7 +525,9 @@ def generator_dorogovtsev_goltsev_mendes(n, params, seed):
 
 
 def generator(n, params, seed):
-    if params["model-"] == "gnk":
+    if params["model-"] == "ring":
+        neighbours = generator_ring(n, params, seed)
+    elif params["model-"] == "gnk":
         neighbours = generator_gnk_random_graph(n, params, seed)
     elif params["model-"] == "ws":
         neighbours = watts_strogatz(n, params, seed)
@@ -333,8 +539,20 @@ def generator(n, params, seed):
         neighbours = generator_barabasi_albert(n, params, seed)
     elif params["model-"] == "ls":
         neighbours = generator_local_search(n, params, seed)
+    elif params["model-"] == "tc":
+        neighbours = generator_triadic_closure(n, params, seed)
+    elif params["model-"] == "nn":
+        neighbours = nearest_neighbor(n, params, seed)
     elif params["model-"] == "bb":
-        neighbours = generator_bubbles(n, params, seed)
+        if params["L"] == 1:
+            neighbours = generator_bubbles_L1(n, params, seed)
+        else:
+            neighbours = generator_bubbles(n, params, seed)
+    elif params["model-"] == "bbs":
+        if params["L"] == 1:
+            neighbours = generator_bubbles_L1_split(n, params, seed)
+    elif params["model-"] == "bbh":
+        neighbours = generator_bubbles_house(n, params, seed)
     elif params["model-"] == "bb2":
         if params["L"] == 1 and params["W"] == 2:
             neighbours = generator_bubbles_2_L1_W2(n, params, seed)
@@ -404,6 +622,16 @@ def get_n_communities(g, method="blocks", neighbours=None, line_graph=False):
         im.run()
         state = None
         labels = [node.module_id for node in im.nodes]
+    elif method == "heatcapacity":
+        # calculates the number of maxima in the heat capacity plot vs 1/tau
+        tau, s, c = heat_capacity(neighbours)
+        maxima = np.array(argrelmax(c)[0])
+        return g, None, [], len(maxima)
+    elif method == "heatcapacity_rw":
+        # calculates the number of maxima in the heat capacity plot vs 1/tau
+        tau, s, c = heat_capacity(neighbours, random_walk=True)
+        maxima = np.array(argrelmax(c)[0])
+        return g, None, [], len(maxima)
     elif method == "hgc":
         edge2nodes = neighbours
         node2edges = neighbours
@@ -418,7 +646,7 @@ def get_n_communities_from_neighbours(
     neighbours, method="blocks", directed=False, line_graph=False
 ):
     g = graphtool_from_neighbours(neighbours, directed=directed)
-    return get_n_communities(g, line_graph, method=method)
+    return get_n_communities(g, line_graph=line_graph, method=method)
 
 
 def n_instances_with_cummunities(n, params, nr, method, rewire, line_graph):
@@ -570,3 +798,31 @@ def find_instances_with_communities(
             #                gt.graph_draw(g, vertex_fill_color=dict(zip(range(len(labels)), labels)), output=filename)
             count += 1
         seed += 1
+
+
+def heat_capacity(
+    neighbours, inv_tau_min=0.0001, inv_tau_max=1000, n_points=1000, random_walk=False
+):
+    n = len(neighbours)
+    L = np.zeros((n, n))
+    if random_walk:
+        for i in range(n):
+            L[i, np.array(neighbours[i])] = -1 / len(neighbours[i])
+            L[i, i] = 1
+    else:
+        for i in range(n):
+            L[i, np.array(neighbours[i])] = -1
+            L[i, i] = len(neighbours[i])
+    lambda_ = np.real(np.linalg.eigvals(L))
+    lambda_[lambda_ < 0] = 0
+    tau = 1 / np.exp(np.linspace(np.log(inv_tau_min), np.log(inv_tau_max), n_points))
+    lambda_v = np.repeat(lambda_[:, np.newaxis], n_points, axis=1)
+    tau_v = np.repeat(tau[np.newaxis, :], n, axis=0)
+    e = np.exp(-lambda_v * tau_v)
+    sum_0 = np.sum(e, axis=0)
+    sum_1 = np.sum(lambda_v * e, axis=0)
+    mu = e / sum_0
+    mu_log_mu = mu * (1 + np.log(mu + 1e-10))
+    s = -np.sum(mu * np.log(mu + 1e-10), axis=0) / np.log(n)
+    c = tau * np.sum((sum_1 / sum_0 - lambda_v) * mu_log_mu, axis=0) / np.log(n)
+    return tau, s, c
