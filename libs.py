@@ -5,8 +5,30 @@ import graph_tool.all as gt
 import igraph as ig
 import networkx as nx
 from infomap import Infomap
+import itertools
 from ramsey_netcom.hgc import hgc
 from scipy.signal import argrelmax
+
+
+def split_symmetric(neighbours, i, j):
+    l = 1 if degree_j == 2 else np.random.randint(1, len(neighbours[j]) - 1)
+    neighbours_ = list(np.random.permutation(neighbours[j]))
+    new_neighbours = neighbours_[:l]
+    neighbours[j] = neighbours_[l:]
+    for k in new_neighbours:
+        neighbours[k][neighbours[k].index(j)] = i
+    neighbours.append(new_neighbours)
+    return neighbours
+
+
+def split_asymmetric(neighbours, i, j):
+    degree_j = len(neighbours[j])
+    l = np.random.randint(degree_j)
+    k = neighbours[j][l]
+    neighbours[j][l] = i
+    neighbours[k][neighbours[k].index(j)] = i
+    neighbours.append([j, k])
+    return neighbours
 
 
 def generator_ring(n, params, seed):
@@ -20,7 +42,7 @@ def generator_ring(n, params, seed):
 
 def generator_gnk_random_graph(n, params, seed):
     K = params["K"]
-    G = nx.gnm_random_graph(n, K * n, seed=seed)
+    G = nx.gnm_random_graph(n, (K * n) // 2, seed=seed)
     return [list(G.neighbors(i)) for i in G.nodes]
 
 
@@ -249,7 +271,7 @@ def generator_bubbles_2(n, params, seed):
 
 def generator_bubbles_2_L1_W2(n, params, seed):
     """A chain of L=1 nodes is attached to two distinct nodes at most W=2 steps appart.
-    - conjecture: has the mergent community property
+    - conjecture: has the emergent community property
     """
     neighbours = [[] for i in range(n)]
     neighbours[0].append(1)
@@ -412,21 +434,17 @@ def generator_dup_split(n, params, seed):
     is_duplicate = np.random.random(n) < q
     for i in range(2, n):
         j = np.random.randint(i)
-        if is_duplicate[i]:
+        degree_j = len(neighbours[j])
+        if is_duplicate[i] or degree_j == 1:
             for k in neighbours[j]:
                 neighbours[k].append(i)
             new_neighbours = [k for k in neighbours[j]]
             if p > 0 and np.random.random() < p:
                 neighbours[j].append(i)
                 new_neighbours.append(j)
+            neighbours.append(new_neighbours)
         else:
-            l = np.random.randint(len(neighbours[j]))
-            k = neighbours[j][l]
-            m = neighbours[k].index(j)
-            neighbours[j][l] = i
-            neighbours[k][m] = i
-            new_neighbours = [j, k]
-        neighbours.append(new_neighbours)
+            neighbours = split_asymmetric(neighbours, i, j)
     return neighbours
 
 
@@ -525,6 +543,8 @@ def generator_dorogovtsev_goltsev_mendes(n, params, seed):
 
 
 def generator(n, params, seed):
+    """a graph generator calling different models"""
+
     if params["model-"] == "ring":
         neighbours = generator_ring(n, params, seed)
     elif params["model-"] == "gnk":
@@ -545,23 +565,30 @@ def generator(n, params, seed):
         neighbours = nearest_neighbor(n, params, seed)
     elif params["model-"] == "bb":
         if params["L"] == 1:
-            neighbours = generator_bubbles_L1(n, params, seed)
+            if "W" in params:
+                if params["W"] == 2:
+                    neighbours = generator_bubbles_2_L1_W2(n, params, seed)
+                elif params["W"] == 3:
+                    neighbours = generator_bubbles_2_L1_W3(n, params, seed)
+                elif params["W"] == "any":
+                    neighbours = generator_big_bubbles(n, params, seed)
+                else:
+                    neighbours = generator_bubbles_2(n, params, seed)
+            else:
+                neighbours = generator_bubbles_L1(n, params, seed)
         else:
-            neighbours = generator_bubbles(n, params, seed)
+            if "W" in params:
+                if params["W"] == "any":
+                    neighbours = generator_big_bubbles(n, params, seed)
+                else:
+                    neighbours = generator_bubbles_2(n, params, seed)
+            else:
+                neighbours = generator_bubbles(n, params, seed)
     elif params["model-"] == "bbs":
         if params["L"] == 1:
             neighbours = generator_bubbles_L1_split(n, params, seed)
     elif params["model-"] == "bbh":
         neighbours = generator_bubbles_house(n, params, seed)
-    elif params["model-"] == "bb2":
-        if params["L"] == 1 and params["W"] == 2:
-            neighbours = generator_bubbles_2_L1_W2(n, params, seed)
-        elif params["L"] == 1 and params["W"] == 3:
-            neighbours = generator_bubbles_2_L1_W3(n, params, seed)
-        else:
-            neighbours = generator_bubbles_2(n, params, seed)
-    elif params["model-"] == "bbb":
-        neighbours = generator_big_bubbles(n, params, seed)
     elif params["model-"] == "bbd":
         neighbours = generator_bubbles_deterministic(n, params, seed)
     elif params["model-"] == "regular":
@@ -800,17 +827,25 @@ def find_instances_with_communities(
         seed += 1
 
 
+def total_energy(g):
+    a = gt.adjacency(g)
+    lambda_ = np.real(np.linalg.eigvals(a.toarray()))
+    return np.sum(np.maximum(0, lambda_))
+
+
 def heat_capacity(
     neighbours, inv_tau_min=0.0001, inv_tau_max=1000, n_points=1000, random_walk=False
 ):
     n = len(neighbours)
     L = np.zeros((n, n))
     if random_walk:
-        for i in range(n):
+        nodes_with_links = [i for i in range(n) if neighbours[i]]
+        for i in nodes_with_links:
             L[i, np.array(neighbours[i])] = -1 / len(neighbours[i])
             L[i, i] = 1
     else:
-        for i in range(n):
+        nodes_with_links = [i for i in range(n) if neighbours[i]]
+        for i in nodes_with_links:
             L[i, np.array(neighbours[i])] = -1
             L[i, i] = len(neighbours[i])
     lambda_ = np.real(np.linalg.eigvals(L))
@@ -826,3 +861,114 @@ def heat_capacity(
     s = -np.sum(mu * np.log(mu + 1e-10), axis=0) / np.log(n)
     c = tau * np.sum((sum_1 / sum_0 - lambda_v) * mu_log_mu, axis=0) / np.log(n)
     return tau, s, c
+
+
+def average_shortest_path_multiplicity(g):
+    v = g.vertices()
+    n = g.num_vertices()
+    return np.mean(
+        [gt.count_shortest_paths(g, i, j) for i, j in itertools.combinations(v, r=2)]
+    )
+
+
+def n_communities_vs_n(
+    params,
+    savepath,
+    nr=1000,
+    n_min=10,
+    n_max=200,
+    dn=10,
+    log=False,
+    method="blocks",
+    append=False,
+    full=False,
+):
+    """wrapper to investigate community properties at different network sizes"""
+
+    model = get_model_name(params)
+    log_label = "_log" if log else ""
+    method_label = "" if method == "blocks" else f"_{method}_regularized"
+    filename = f"{savepath}/{model}_nr{nr}_vs_n{log_label}{method_label}.csv"
+    print(filename)
+
+    if append:
+        df = pd.read_csv(filename)
+        data = dict()
+        for c in df.columns:
+            data[c] = df[c].to_list()
+    else:
+        data = dict(
+            n=[],
+            unique_mean=[],
+            unique_p=[],
+            energy=[],
+            multipath=[],
+            rnd_unique_mean=[],
+            rnd_unique_p=[],
+            rnd_energy=[],
+            multipath_rnd=[],
+        )
+        if full:
+            data["c"] = []
+            data["c_rnd"] = []
+            data["diameter"] = []
+            data["diameter_rnd"] = []
+
+    n = n_min
+    while n < n_max:
+        print(n)
+        kappa = []
+        e = []
+        kappa_rnd = []
+        e_rnd = []
+        c = []
+        c_rnd = []
+        diameter = []
+        diameter_rnd = []
+        multipath = []
+        multipath_rnd = []
+        for r in range(nr):
+            neighbours = generator(n, params, r)
+            g, state, labels, n_communities = get_n_communities_from_neighbours(
+                neighbours, method=method
+            )
+            gx = nx.from_edgelist([(s, t) for s, t, i in g.iter_edges([g.edge_index])])
+            kappa.append(n_communities)
+            e.append(total_energy(g))
+            if full:
+                c.append(gt.vertex_average(g, gt.local_clustering(g))[0])
+                d = np.mean(gt.shortest_distance(g))
+                diameter.append(d)
+            multipath.append(get_multipath(g))
+            rejection_count = gt.random_rewire(g)
+            g, state, labels, n_communities_rnd = get_n_communities(g, method=method)
+            kappa_rnd.append(n_communities_rnd)
+            e_rnd.append(total_energy(g))
+            if full:
+                c_rnd.append(gt.vertex_average(g, gt.local_clustering(g))[0])
+                d_rnd = np.mean(gt.shortest_distance(g))
+                diameter_rnd.append(d_rnd)
+            multipath_rnd.append(get_multipath(g))
+        data["n"].append(n)
+        x = np.array(kappa)
+        data["unique_mean"].append(x.mean())
+        data["unique_p"].append(np.mean(x > 1))
+        data["energy"].append(np.mean(e))
+        data["multipath"].append(np.array(multipath).mean())
+        x = np.array(kappa_rnd)
+        data["rnd_unique_mean"].append(x.mean())
+        data["rnd_unique_p"].append(np.mean(x > 1))
+        data["rnd_energy"].append(np.mean(e_rnd))
+        if full:
+            data["c"].append(np.array(c).mean())
+            data["c_rnd"].append(np.array(c_rnd).mean())
+            data["diameter"].append(np.array(diameter).mean())
+            data["diameter_rnd"].append(np.array(diameter_rnd).mean())
+        data["multipath_rnd"].append(np.array(multipath_rnd).mean())
+
+        if log:
+            n *= 2
+        else:
+            n += dn
+        pd.DataFrame(data).to_csv(filename, index=False)
+    pd.DataFrame(data).to_csv(filename, index=False)
