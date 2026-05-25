@@ -322,31 +322,20 @@ def generator_bubbles_2_L1_W3(n, params, seed):
 
 
 def generator_bubbles_deterministic(n_generations, params, seed):
-    """A chain of L nodes is attached to the nodes at the end of every link in the network.
-    - number of nodes increases as n = (3^n_generations + 1) / 2
-    """
-    L = params["L"]
-    n = (2 + L + L * (L + 2) ** n_generations) // (L + 1)
-    neighbours = [[] for i in range(n)]
-    neighbours[0].append(1)
-    neighbours[1].append(0)
-    edges = [(0, 1)]
-    i = 2
+    """A node is attached to the nodes at the end of every edge in the network."""
     g = 0
+    n = 3
+    edges = [(0, 1), (1, 2), (0, 2)]
+    neighbours = [[1, 2], [0, 2], [0, 1]]
     while g < n_generations:
-        edges_current = edges.copy()
-        for e in edges_current:
-            j = e[0]
-            k = e[1]
-            new_neighbours = [j] + list(range(i, i + L)) + [k]
-            for l in range(1, L + 2):
-                j = new_neighbours[l - 1]
-                k = new_neighbours[l]
-                edges.append((j, k))
-                if j < n and k < n:
-                    neighbours[j].append(k)
-                    neighbours[k].append(j)
-            i += L
+        new_edges = []
+        for i, j in edges:
+            new_edges += [(i, n), (j, n)]
+            neighbours[i].append(n)
+            neighbours[j].append(n)
+            neighbours.append([i, j])
+            n += 1
+        edges += new_edges
         g += 1
     return neighbours
 
@@ -519,7 +508,7 @@ def nearest_neighbor(n, params, seed=0):
             i += 1
         elif potential_edges:
             l = np.random.randint(len(potential_edges))
-            (j, k) = index2tuple(potential_edges.pop(l))
+            j, k = index2tuple(potential_edges.pop(l))
             new_potential_edges = {
                 tuple2index(min(l, j), max(l, j))
                 for l in neighbors[k]

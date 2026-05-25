@@ -9,7 +9,6 @@ import itertools
 import matplotlib.pyplot as plt
 from ramsey_netcom.libs import n_communities_vs_n
 
-
 DATAPATH = "data"
 
 GENERATE_DATA = False
@@ -211,7 +210,10 @@ plt.rcParams.update({"font.size": 12})
 fig, ax = plt.subplots()
 
 df = pd.read_csv(f"{DATAPATH}/model-bb_deterministic_vs_n_log.csv")
-df["multipath"] = df.M / (df.n * (df.n - 1) / 2)
+df = pd.read_csv(
+    "/Users/avazquez/submissions/communities.2024/data_x/model-bbd_nr1_vs_n.csv"
+)
+df["n"] = 3 * (3**df.n + 1) // 2
 
 ax.scatter(df.n, df.multipath)
 x1, y1 = get_fit(df.n, df.multipath, "log-linear")
