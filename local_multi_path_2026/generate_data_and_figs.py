@@ -25,16 +25,35 @@ if GENERATE_DATA:
     if not os.path.isdir(DATAPATH):
         os.makedirs(DATAPATH)
 
+    data_n_communities_vs_n(
+        {"model-": "ba", "m": 2, "a": 2}, log=True, n_min=8, n_max=1025, nr=100
+    )
     n_communities_vs_n(
         {"model-": "ls", "d": 1}, DATAPATH, log=True, n_min=8, n_max=1025, nr=NR
     )
     n_communities_vs_n(
-        {"model-": "ds", "q": 0.3}, DATAPATH, log=True, n_min=8, n_max=1025, nr=NR
+        {"model-": "ds", "q": 1 / 3},
+        DATAPATH,
+        log=True,
+        n_min=8,
+        n_max=1025,
+        nr=NR,
+        model="model-ds_q1_3",
+    )
+    n_communities_vs_n(
+        {"model-": "ds", "q": 2 / 5},
+        DATAPATH,
+        log=True,
+        n_min=8,
+        n_max=1025,
+        nr=NR,
+        model="model-ds_q2_5",
     )
     for L in range(4):
         n_communities_vs_n(
             {"model-": "bb", "L": L}, DATAPATH, log=True, n_min=8, n_max=1025, nr=NR
         )
+    data_n_communities_vs_n({"model-": "bbd"}, n_min=1, n_max=7, dn=1, nr=1)
 
 
 def get_fit(x, y, fit, num=1000, report=False):
@@ -70,29 +89,111 @@ def line_type(fit):
 
 # figure 1
 
-plt.rcParams.update({"font.size": 12})
+plt.rcParams.update({"font.size": 18})
 
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(3, 2)
 
 symbol = iter(["o", "s", "^", "X", "D"])
+color = iter(plt.cm.Set1.colors[:5])
+
+s = 70
+
+for model, gamma, label, fit, ax_, title in [
+    ("model-ls_d1_nr100_vs_n_log.csv", 5, r"$LS(n, 1)^*$", "log-linear", ax[0, 0], "a"),
+    (
+        "model-ds_q1_3_nr100_vs_n_log.csv",
+        3,
+        r"DS$(n, 1/3)^*$",
+        "log-linear",
+        ax[0, 1],
+        "b",
+    ),
+    ("model-bb_l1_nr100_vs_n_log.csv", 3, r"$BB(n, 1)^*$", "log-linear", ax[1, 0], "c"),
+    (
+        "model-ba_m2_a2_nr100_vs_n_log.csv",
+        3,
+        r"$BA(n, 2)$",
+        "log-linear",
+        ax[1, 1],
+        "d",
+    ),
+    (
+        "model-ds_q2_5_nr100_vs_n_log.csv",
+        5 / 2,
+        r"DS$(n, 2/5)^*$",
+        "log-linear",
+        ax[2, 0],
+        "e",
+    ),
+]:
+    df = pd.read_csv(f"data/{model}")
+    if "ds_q2_5" in model:
+        q = 2 / 5
+        x = np.log(df.n)
+        y = np.log(df.multipath_rnd)
+        z = np.polyfit(x, y, 1)
+        p = np.poly1d(z)
+        slope = 1 / 5
+        intercept = np.mean(y - slope * x)
+        ax_.plot(df.n, np.exp(intercept + slope * x), "k--", label=r"$b n^{1/5}$")
+        yscale = "log"
+    else:
+        x = np.log(df.n)
+        y = df.multipath if "ba" in model else df.multipath_rnd
+        z = np.polyfit(x[:-3], y[:-3], 1) if "ls" in model else np.polyfit(x, y, 1)
+        p = np.poly1d(z)
+        if "ls" in model:
+            ax_.plot(df.n, p(x), "k-.", label=r"$a+b\log n$")
+        else:
+            slope = 1 / np.e
+            intercept = np.mean(y - slope * x)
+            ax_.plot(df.n, intercept + slope * x, "k-.", label=r"$a +(1/e)\log n$")
+        print(model, p)
+        yscale = "linear"
+    y = df.multipath if "ba" in model else df.multipath_rnd
+    ax_.scatter(df.n, y, marker=next(symbol), label=label, s=s, c=next(color))
+
+    ax_.legend(loc="upper left", frameon=0)
+    ax_.set(xlabel=r"$n$", ylabel=r"$\left<\mu\right>$", xscale="log", yscale=yscale)
+    ax_.set_title(title, x=-0.1, y=1.05)
+
+ax_ = ax[2, 1]
+
+minkk = np.inf
+maxkk = -np.inf
+
+symbol = iter(["o", "s", "^", "X", "D", ">", "+"])
+color = iter(plt.cm.Set1.colors[:5])
 
 for model, label in [
-    (f"model-ls_d1_nr{NR}_vs_n_log.csv", r"$LS(n, 1)$"),
-    (f"model-ds_q0.3_nr{NR}_vs_n_log.csv", r"DS$(n, 0.3)$"),
-    (f"model-bb_l1_nr{NR}_vs_n_log.csv", r"$BB(n, 1)$"),
+    ("model-ls_d1_nr100_vs_n_log.csv", r"$LS(n, 1)^*$"),
+    ("model-ds_q1_3_nr100_vs_n_log.csv", r"DS$(n, 1/3)^*$"),
+    ("model-bb_l1_nr100_vs_n_log.csv", r"$BB(n, 1)^*$"),
+    ("model-ba_m2_a2_nr100_vs_n_log.csv", r"$BA(n, 2)$"),
+    ("model-ds_q2_5_nr100_vs_n_log.csv", r"DS$(n, 2/5)^*$"),
 ]:
-    df = pd.read_csv(f"{DATAPATH}/{model}")
-    ax.scatter(df.n, df.multipath_rnd, marker=next(symbol), label=label)
-    x = np.log(df.n)
-    z = np.polyfit(x, df.multipath_rnd, 1)
-    p = np.poly1d(z)
-    ax.plot(df.n, p(x))
+    df = pd.read_csv(f"data/{model}")
+    x = df.mean_kk**2 / df.mean_k
+    x = df.mean_kk
+    y = df.multipath if "BA" in label else df.multipath_rnd
+    ax_.scatter(x, y, marker=next(symbol), s=s, c=next(color))
+    minkk = min(minkk, x.min())
+    maxkk = max(maxkk, x.max())
 
-ax.legend(loc="lower right", frameon=0)
-ax.set(xlabel=r"$n$", ylabel=r"$\left<\mu\right>$", xscale="log")
+maxkk = 10
+x = np.array([minkk, maxkk])
+ax_.plot(x, x / np.e, "k-", label="Mean-field")
+
+ax_.legend(loc="upper left", frameon=0)
+ax_.set(xlabel=r"$c_2$", ylabel=r"$\left<\mu\right>$")
+ax_.set_title("f", x=-0.1, y=1.05)
+
+plt.subplots_adjust(bottom=0, right=1.5, wspace=0.25, top=2, hspace=0.35)
+
 plt.savefig(
     "fig1.pdf", bbox_inches="tight", facecolor="white", edgecolor="none", dpi=300
 )
+
 
 # figure 2
 
@@ -131,14 +232,14 @@ models = [
         r"$LS(n, 1)$",
     ),
     (
-        f"model-ds_q0.3_nr{NR}_vs_n_log.csv",
+        f"model-ds_q1_3_nr{NR}_vs_n_log.csv",
         "exp",
         "linear",
         "log",
         "exp",
         "linear",
         "log",
-        r"$DS(n, 0.3)$",
+        r"$DS(n, 1/3)$",
     ),
 ]
 
@@ -178,7 +279,7 @@ def plot2(ax, L, fit, xscale, yscale, fit1, xscale1, yscale1):
         xscale=xscale1,
         yscale=yscale1,
     )
-    ax[1].legend(loc="lower right", frameon=0)
+    ax[1].legend(loc="upper left", frameon=0)
 
 
 plt.rcParams.update({"font.size": 24})
@@ -215,10 +316,19 @@ df = pd.read_csv(
 )
 df["n"] = 3 * (3**df.n + 1) // 2
 
-ax.scatter(df.n, df.multipath)
+ax.scatter(df.n, df.multipath_rnd, label=r"$BBD(n, 1)^*$")
+x = np.log(df.n)
+y = np.log(df.multipath_rnd)
+alpha = -1 + 3 / (1 + np.log(3) / np.log(2))
+intercept = np.mean(y - alpha * x)
+x1 = np.exp(np.linspace(x.min(), x.max(), num=1000))
+y1 = np.exp(intercept + alpha * np.log(x1))
+ax.plot(x1, y1, "k--", label=r"$bn^{\alpha}$")
+ax.scatter(df.n, df.multipath, label=r"$BBD(n, 1)$", marker="s")
 x1, y1 = get_fit(df.n, df.multipath, "log-linear")
-ax.plot(x1, y1)
+ax.plot(x1, y1, "k-.", label=r"$a + b\log n$")
 ax.set(xlabel=r"$n$", ylabel=r"$\mu$", xscale="log")
+ax.legend(loc="upper left", frameon=0)
 
 plt.savefig(
     "fig4.pdf", bbox_inches="tight", facecolor="white", edgecolor="none", dpi=300

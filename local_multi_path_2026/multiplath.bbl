@@ -6,7 +6,7 @@
 %Control: page (0) single
 %Control: year (1) truncated
 %Control: production of eprint (0) enabled
-\begin{thebibliography}{16}%
+\begin{thebibliography}{25}%
 \makeatletter
 \providecommand \@ifxundefined [1]{%
  \@ifx{#1\undefined}
@@ -91,13 +91,20 @@
   {Tokuyama}}}\ (\bibinfo  {publisher} {Springer},\ \bibinfo {address} {Berlin,
   Heidelberg},\ \bibinfo {year} {1999})\ pp.\ \bibinfo {pages}
   {1--17}\BibitemShut {NoStop}%
-\bibitem [{\citenamefont {Vazquez}(2001)}]{vazquez01rs}%
+\bibitem [{\citenamefont {Vazquez}(2001{\natexlab{a}})}]{vazquez01rs}%
   \BibitemOpen
   \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
   {Vazquez}},\ }\href {\doibase 10.1209/epl/i2001-00259-y} {\bibfield
   {journal} {\bibinfo  {journal} {Europh. Lett.}\ }\textbf {\bibinfo {volume}
-  {54}},\ \bibinfo {pages} {430} (\bibinfo {year} {2001})}\BibitemShut
-  {NoStop}%
+  {54}},\ \bibinfo {pages} {430} (\bibinfo {year}
+  {2001}{\natexlab{a}})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Vazquez}(2001{\natexlab{b}})}]{vazquez01citation}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Vazquez}},\ }\href {https://arxiv.org/abs/cond-mat/0105031} {\enquote
+  {\bibinfo {title} {Statistics of citation networks},}\ } (\bibinfo {year}
+  {2001}{\natexlab{b}}),\ \Eprint {http://arxiv.org/abs/cond-mat/0105031}
+  {arXiv:cond-mat/0105031 [cond-mat.stat-mech]} \BibitemShut {NoStop}%
 \bibitem [{\citenamefont {Jin}\ \emph {et~al.}(2001)\citenamefont {Jin},
   \citenamefont {Girvan},\ and\ \citenamefont
   {Newman}}]{growing_social_networks_jin01}%
@@ -108,6 +115,17 @@
   {\doibase 10.1103/PhysRevE.64.046132} {\bibfield  {journal} {\bibinfo
   {journal} {Phys. Rev. E}\ }\textbf {\bibinfo {volume} {64}},\ \bibinfo
   {pages} {046132} (\bibinfo {year} {2001})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Bianconi}\ \emph {et~al.}(2014)\citenamefont
+  {Bianconi}, \citenamefont {Darst}, \citenamefont {Iacovacci},\ and\
+  \citenamefont {Fortunato}}]{communities_bianconi_2014}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {G.}~\bibnamefont
+  {Bianconi}}, \bibinfo {author} {\bibfnamefont {R.~K.}\ \bibnamefont {Darst}},
+  \bibinfo {author} {\bibfnamefont {J.}~\bibnamefont {Iacovacci}}, \ and\
+  \bibinfo {author} {\bibfnamefont {S.}~\bibnamefont {Fortunato}},\ }\href
+  {\doibase 10.1103/PhysRevE.90.042806} {\bibfield  {journal} {\bibinfo
+  {journal} {Phys. Rev. E}\ }\textbf {\bibinfo {volume} {90}},\ \bibinfo
+  {pages} {042806} (\bibinfo {year} {2014})}\BibitemShut {NoStop}%
 \bibitem [{\citenamefont {Vázquez}\ \emph {et~al.}(2003)\citenamefont
   {Vázquez}, \citenamefont {Flammini}, \citenamefont {Maritan},\ and\
   \citenamefont {Vespignani}}]{vazquez03dup}%
@@ -130,23 +148,41 @@
   {journal} {\bibinfo  {journal} {J. Theor. Biol.}\ }\textbf {\bibinfo {volume}
   {222}},\ \bibinfo {pages} {199} (\bibinfo {year} {2003})}\BibitemShut
   {NoStop}%
+\bibitem [{\citenamefont {Chung}\ \emph {et~al.}(2003)\citenamefont {Chung},
+  \citenamefont {Lu}, \citenamefont {Dewey},\ and\ \citenamefont
+  {Galas}}]{chung03}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {F.}~\bibnamefont
+  {Chung}}, \bibinfo {author} {\bibfnamefont {L.}~\bibnamefont {Lu}}, \bibinfo
+  {author} {\bibfnamefont {T.~G.}\ \bibnamefont {Dewey}}, \ and\ \bibinfo
+  {author} {\bibfnamefont {D.~J.}\ \bibnamefont {Galas}},\ }\href {\doibase
+  10.1089/106652703322539024} {\bibfield  {journal} {\bibinfo  {journal} {J.
+  Comp. Biol.}\ }\textbf {\bibinfo {volume} {10}},\ \bibinfo {pages} {677}
+  (\bibinfo {year} {2003})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Krapivsky}\ and\ \citenamefont
+  {Redner}(2005)}]{copying_krapivsky_2005}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {P.~L.}\ \bibnamefont
+  {Krapivsky}}\ and\ \bibinfo {author} {\bibfnamefont {S.}~\bibnamefont
+  {Redner}},\ }\href {\doibase 10.1103/PhysRevE.71.036118} {\bibfield
+  {journal} {\bibinfo  {journal} {Phys. Rev. E}\ }\textbf {\bibinfo {volume}
+  {71}},\ \bibinfo {pages} {036118} (\bibinfo {year} {2005})}\BibitemShut
+  {NoStop}%
+\bibitem [{\citenamefont {Solé}\ and\ \citenamefont
+  {Valverde}(2007)}]{sole_spontaneous_2007}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {R.~V.}\ \bibnamefont
+  {Solé}}\ and\ \bibinfo {author} {\bibfnamefont {S.}~\bibnamefont
+  {Valverde}},\ }\href {\doibase 10.1098/rsif.2007.1108} {\bibfield  {journal}
+  {\bibinfo  {journal} {Journal of The Royal Society Interface}\ }\textbf
+  {\bibinfo {volume} {5}},\ \bibinfo {pages} {129} (\bibinfo {year} {2007})},\
+  \bibinfo {note} {publisher: Royal Society}\BibitemShut {NoStop}%
 \bibitem [{\citenamefont {Vazquez}(2025)}]{vazquez2025local}%
   \BibitemOpen
   \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
   {Vazquez}},\ }\href {\doibase 10.1103/d7kf-s1cf} {\bibfield  {journal}
   {\bibinfo  {journal} {Phys. Rev. E}\ }\textbf {\bibinfo {volume} {111}},\
   \bibinfo {pages} {064314} (\bibinfo {year} {2025})}\BibitemShut {NoStop}%
-\bibitem [{\citenamefont {Bianconi}\ \emph {et~al.}(2014)\citenamefont
-  {Bianconi}, \citenamefont {Darst}, \citenamefont {Iacovacci},\ and\
-  \citenamefont {Fortunato}}]{communities_bianconi_2014}%
-  \BibitemOpen
-  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {G.}~\bibnamefont
-  {Bianconi}}, \bibinfo {author} {\bibfnamefont {R.~K.}\ \bibnamefont {Darst}},
-  \bibinfo {author} {\bibfnamefont {J.}~\bibnamefont {Iacovacci}}, \ and\
-  \bibinfo {author} {\bibfnamefont {S.}~\bibnamefont {Fortunato}},\ }\href
-  {\doibase 10.1103/PhysRevE.90.042806} {\bibfield  {journal} {\bibinfo
-  {journal} {Phys. Rev. E}\ }\textbf {\bibinfo {volume} {90}},\ \bibinfo
-  {pages} {042806} (\bibinfo {year} {2014})}\BibitemShut {NoStop}%
 \bibitem [{\citenamefont {Dorogovtsev}\ \emph {et~al.}(2001)\citenamefont
   {Dorogovtsev}, \citenamefont {Mendes},\ and\ \citenamefont
   {Samukhin}}]{dorogotsev2001link}%
@@ -165,13 +201,12 @@
   {journal} {\bibinfo  {journal} {figshare}\ } (\bibinfo {year} {2014}),\
   10.6084/m9.figshare.1164194}\BibitemShut {NoStop}%
 \bibitem [{\citenamefont
-  {Peixoto}(2024)}]{peixoto2024networkreconstructionminimumdescription}%
+  {Peixoto}(2025)}]{peixoto2024networkreconstructionminimumdescription}%
   \BibitemOpen
   \bibfield  {author} {\bibinfo {author} {\bibfnamefont {T.~P.}\ \bibnamefont
-  {Peixoto}},\ }\href {https://arxiv.org/abs/2405.01015} {\enquote {\bibinfo
-  {title} {Network reconstruction via the minimum description length
-  principle},}\ } (\bibinfo {year} {2024}),\ \Eprint
-  {http://arxiv.org/abs/2405.01015} {arXiv:2405.01015 [stat.ML]} \BibitemShut
+  {Peixoto}},\ }\href {\doibase 10.1103/PhysRevX.15.011065} {\bibfield
+  {journal} {\bibinfo  {journal} {Phys. Rev. X}\ }\textbf {\bibinfo {volume}
+  {15}},\ \bibinfo {pages} {011065} (\bibinfo {year} {2025})}\BibitemShut
   {NoStop}%
 \bibitem [{\citenamefont {Edler}\ \emph {et~al.}(2025)\citenamefont {Edler},
   \citenamefont {Holmgren},\ and\ \citenamefont
@@ -212,4 +247,51 @@
   {journal} {\bibinfo  {journal} {Phys. Rev. E}\ }\textbf {\bibinfo {volume}
   {65}},\ \bibinfo {pages} {066122} (\bibinfo {year} {2002})}\BibitemShut
   {NoStop}%
+\bibitem [{\citenamefont {Krapivsky}\ \emph {et~al.}(2000)\citenamefont
+  {Krapivsky}, \citenamefont {Redner},\ and\ \citenamefont
+  {Leyvraz}}]{degree_dist_krapivsky00}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {P.~L.}\ \bibnamefont
+  {Krapivsky}}, \bibinfo {author} {\bibfnamefont {S.}~\bibnamefont {Redner}}, \
+  and\ \bibinfo {author} {\bibfnamefont {F.}~\bibnamefont {Leyvraz}},\ }\href
+  {\doibase 10.1103/PhysRevLett.85.4629} {\bibfield  {journal} {\bibinfo
+  {journal} {Phys. Rev. Lett.}\ }\textbf {\bibinfo {volume} {85}},\ \bibinfo
+  {pages} {4629} (\bibinfo {year} {2000})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Fronczak}\ \emph {et~al.}(2004)\citenamefont
+  {Fronczak}, \citenamefont {Fronczak},\ and\ \citenamefont
+  {Ho{\l}yst}}]{Fronczak2004}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Fronczak}}, \bibinfo {author} {\bibfnamefont {P.}~\bibnamefont {Fronczak}},
+  \ and\ \bibinfo {author} {\bibfnamefont {J.~A.}\ \bibnamefont {Ho{\l}yst}},\
+  }\href {\doibase 10.1103/PhysRevE.70.056110} {\bibfield  {journal} {\bibinfo
+  {journal} {Phys. Rev. E}\ }\textbf {\bibinfo {volume} {70}},\ \bibinfo
+  {pages} {056110} (\bibinfo {year} {2004})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Blondel}\ \emph {et~al.}(2007)\citenamefont
+  {Blondel}, \citenamefont {Guillaume}, \citenamefont {Hendrickx},\ and\
+  \citenamefont {Jungers}}]{Blondel2007}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {V.~D.}\ \bibnamefont
+  {Blondel}}, \bibinfo {author} {\bibfnamefont {J.-L.}\ \bibnamefont
+  {Guillaume}}, \bibinfo {author} {\bibfnamefont {J.~M.}\ \bibnamefont
+  {Hendrickx}}, \ and\ \bibinfo {author} {\bibfnamefont {R.~M.}\ \bibnamefont
+  {Jungers}},\ }\href {\doibase 10.1103/PhysRevE.76.066101} {\bibfield
+  {journal} {\bibinfo  {journal} {Phys. Rev. E}\ }\textbf {\bibinfo {volume}
+  {76}},\ \bibinfo {pages} {066101} (\bibinfo {year} {2007})}\BibitemShut
+  {NoStop}%
+\bibitem [{\citenamefont {Erd{\H{o}}s}\ and\ \citenamefont
+  {R{\'e}nyi}(1960)}]{ErdosRenyi1960}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {P.}~\bibnamefont
+  {Erd{\H{o}}s}}\ and\ \bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {R{\'e}nyi}},\ }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal}
+  {Publ. Math. Inst. Hung. Acad. Sci.}\ }\textbf {\bibinfo {volume} {5}},\
+  \bibinfo {pages} {17} (\bibinfo {year} {1960})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Bollob{\'a}s}(2001)}]{Bollobas2001}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {B.}~\bibnamefont
+  {Bollob{\'a}s}},\ }\href@noop {} {\emph {\bibinfo {title} {{Random
+  Graphs}}}},\ \bibinfo {edition} {2nd}\ ed.\ (\bibinfo  {publisher} {Cambridge
+  University Press},\ \bibinfo {address} {Cambridge},\ \bibinfo {year}
+  {2001})\BibitemShut {NoStop}%
 \end{thebibliography}%

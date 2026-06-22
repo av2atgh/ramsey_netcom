@@ -1,5 +1,6 @@
 import os
 import json
+import random
 import numpy as np
 import graph_tool.all as gt
 import igraph as ig
@@ -21,16 +22,6 @@ def split_symmetric(neighbours, i, j):
     return neighbours
 
 
-def split_asymmetric(neighbours, i, j):
-    degree_j = len(neighbours[j])
-    l = np.random.randint(degree_j)
-    k = neighbours[j][l]
-    neighbours[j][l] = i
-    neighbours[k][neighbours[k].index(j)] = i
-    neighbours.append([j, k])
-    return neighbours
-
-
 def generator_ring(n, params, seed):
     mod = params["mod"]
     neighbours = [[i + 1] for i in range(n - 1)] + [[0]]
@@ -42,6 +33,12 @@ def generator_ring(n, params, seed):
 
 def generator_gnk_random_graph(n, params, seed):
     K = params["K"]
+    G = nx.gnm_random_graph(n, (K * n) // 2, seed=seed)
+    return [list(G.neighbors(i)) for i in G.nodes]
+
+
+def generator_gnk_random_graph_kln(n, params, seed):
+    K = params["K"] * np.log(n)
     G = nx.gnm_random_graph(n, (K * n) // 2, seed=seed)
     return [list(G.neighbors(i)) for i in G.nodes]
 
@@ -79,10 +76,10 @@ def generator_bubbles(n, params, seed):
     n_bubbles = n_bubbles_min + 1 if np.fmod(n - 2, L) else n_bubbles_min
     n = 2 + n_bubbles * L
     neighbours = [[] for i in range(n)]
-    neighbours[0].append(1)
-    neighbours[1].append(0)
-    edges = [(0, 1)]
-    i = 2
+    for i in range(L + 2):
+        neighbours[i] += [i - 1 if i > 0 else L + 1, i + 1 if i < L + 1 else 0]
+    edges = [(i, i + 1 if i < L + 1 else 0) for i in range(L + 2)]
+    i = L + 2
     np.random.seed(seed)
     while i < n:
         j, k = (
@@ -322,22 +319,9 @@ def generator_bubbles_2_L1_W3(n, params, seed):
 
 
 def generator_bubbles_deterministic(n_generations, params, seed):
-    """A node is attached to the nodes at the end of every edge in the network."""
-    g = 0
-    n = 3
-    edges = [(0, 1), (1, 2), (0, 2)]
-    neighbours = [[1, 2], [0, 2], [0, 1]]
-    while g < n_generations:
-        new_edges = []
-        for i, j in edges:
-            new_edges += [(i, n), (j, n)]
-            neighbours[i].append(n)
-            neighbours[j].append(n)
-            neighbours.append([i, j])
-            n += 1
-        edges += new_edges
-        g += 1
-    return neighbours
+    """Deterministic Dorogovtsev-Goltsev-Mendes network."""
+    G = nx.dorogovtsev_goltsev_mendes_graph(n_generations)
+    return [list(G.neighbors(i)) for i in G.nodes]
 
 
 def watts_strogatz(n, params, seed):
@@ -419,12 +403,12 @@ def generator_dup_split(n, params, seed):
     np.random.seed(seed=seed)
     p = params["p"] if "p" in params else 0
     q = params["q"]
-    neighbours = [[1], [0]]
+    neighbours = neighbours = [[3, 1], [0, 2], [1, 3], [2, 0]]
     is_duplicate = np.random.random(n) < q
-    for i in range(2, n):
+    for i in range(4, n):
         j = np.random.randint(i)
         degree_j = len(neighbours[j])
-        if is_duplicate[i] or degree_j == 1:
+        if is_duplicate[i]:
             for k in neighbours[j]:
                 neighbours[k].append(i)
             new_neighbours = [k for k in neighbours[j]]
@@ -433,7 +417,12 @@ def generator_dup_split(n, params, seed):
                 new_neighbours.append(j)
             neighbours.append(new_neighbours)
         else:
-            neighbours = split_asymmetric(neighbours, i, j)
+            degree_j = len(neighbours[j])
+            l = np.random.randint(degree_j)
+            k = neighbours[j][l]
+            neighbours[j][l] = i
+            neighbours[k][neighbours[k].index(j)] = i
+            neighbours.append([j, k])
     return neighbours
 
 
@@ -538,10 +527,14 @@ def generator(n, params, seed):
         neighbours = generator_ring(n, params, seed)
     elif params["model-"] == "gnk":
         neighbours = generator_gnk_random_graph(n, params, seed)
+    elif params["model-"] == "gnk_kln":
+        neighbours = generator_gnk_random_graph_kln(n, params, seed)
     elif params["model-"] == "ws":
         neighbours = watts_strogatz(n, params, seed)
     elif params["model-"] == "dd":
         neighbours = generator_dup_divergence(n, params, seed)
+    elif params["model-"] == "dds":
+        neighbours = generator_dup_divergence_symmetric(n, params, seed)
     elif params["model-"] == "ds":
         neighbours = generator_dup_split(n, params, seed)
     elif params["model-"] == "ba":
@@ -734,7 +727,7 @@ def ramsey_community_number(
     return n
 
 
-def draw_instance(n, params, seed, path, rewire=0):
+def draw_instance(n, params, seed, path, rewire=0, extension="pdf"):
     """Auxiliary method to draw a graph instance."""
     neighbours = generator(n, params, seed)
     g = graphtool_from_neighbours(neighbours)
@@ -745,7 +738,7 @@ def draw_instance(n, params, seed, path, rewire=0):
     if rewire > 0:
         rejection_count = gt.random_rewire(g, n_iter=rewire)
         filename = os.path.join(
-            path, f"{model_name}_n{n}_seed{seed}_rewire{rewire}.pdf"
+            path, f"{model_name}_n{n}_seed{seed}_rewire{rewire}.{extension}"
         )
         state = gt.minimize_blockmodel_dl(g)
         state.draw(output=filename)
@@ -759,6 +752,7 @@ def find_instances_with_communities(
     method="blocks",
     has_communities=True,
     line_graph=False,
+    extension="pdf",
 ):
     """Auxiliary method to find and draw instances with 2 or more communities."""
     model_name = get_model_name(params)
@@ -775,11 +769,11 @@ def find_instances_with_communities(
         ):
             if has_communities:
                 filename = os.path.join(
-                    path, f"{model_name}_n{n}_seed{seed}_{method}.pdf"
+                    path, f"{model_name}_n{n}_seed{seed}_{method}.{extension}"
                 )
             else:
                 filename = os.path.join(
-                    path, f"{model_name}_n{n}_seed{seed}_{method}_no_com.pdf"
+                    path, f"{model_name}_n{n}_seed{seed}_{method}_no_com.{extension}"
                 )
             if method == "blocks":
                 state.draw(output=filename)
@@ -854,10 +848,17 @@ def heat_capacity(
 
 def average_shortest_path_multiplicity(g):
     v = g.vertices()
-    n = g.num_vertices()
     return np.mean(
         [gt.count_shortest_paths(g, i, j) for i, j in itertools.combinations(v, r=2)]
     )
+
+
+def get_degrees(g):
+    k = g.get_total_degrees(g.get_vertices())
+    mean_k = k.mean()
+    mean_k2 = (k**2).mean()
+    avg_excess_degree = (mean_k2 - mean_k) / mean_k
+    return mean_k, avg_excess_degree
 
 
 def n_communities_vs_n(
@@ -871,10 +872,12 @@ def n_communities_vs_n(
     method="blocks",
     append=False,
     full=False,
+    model=None,
 ):
     """wrapper to investigate community properties at different network sizes"""
 
-    model = get_model_name(params)
+    if model is None:
+        model = get_model_name(params)
     log_label = "_log" if log else ""
     method_label = "" if method == "blocks" else f"_{method}_regularized"
     filename = f"{savepath}/{model}_nr{nr}_vs_n{log_label}{method_label}.csv"
@@ -892,6 +895,8 @@ def n_communities_vs_n(
             unique_p=[],
             energy=[],
             multipath=[],
+            mean_k=[],
+            mean_kk=[],
             rnd_unique_mean=[],
             rnd_unique_p=[],
             rnd_energy=[],
@@ -915,6 +920,8 @@ def n_communities_vs_n(
         diameter = []
         diameter_rnd = []
         multipath = []
+        mean_k = []
+        mean_kk = []
         multipath_rnd = []
         for r in range(nr):
             neighbours = generator(n, params, r)
@@ -929,6 +936,9 @@ def n_communities_vs_n(
                 d = np.mean(gt.shortest_distance(g))
                 diameter.append(d)
             multipath.append(get_multipath(g))
+            mean_k_, mean_kk_ = get_degrees(g)
+            mean_k.append(mean_k_)
+            mean_kk.append(mean_kk_)
             rejection_count = gt.random_rewire(g)
             g, state, labels, n_communities_rnd = get_n_communities(g, method=method)
             kappa_rnd.append(n_communities_rnd)
@@ -944,6 +954,8 @@ def n_communities_vs_n(
         data["unique_p"].append(np.mean(x > 1))
         data["energy"].append(np.mean(e))
         data["multipath"].append(np.array(multipath).mean())
+        data["mean_k"].append(np.array(mean_k).mean())
+        data["mean_kk"].append(np.array(mean_kk).mean())
         x = np.array(kappa_rnd)
         data["rnd_unique_mean"].append(x.mean())
         data["rnd_unique_p"].append(np.mean(x > 1))
