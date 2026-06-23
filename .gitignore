@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+.DS_Store
+
+# Cython build artifacts
+build/
+*.so
+generators_fast.cpp
+
+# scratch profiling/verification
+_profile_gen.py
+_verify_fast.py
+
+# local-only files (not part of the repo)
+recursion.py

@@ -520,6 +520,19 @@ def generator_dorogovtsev_goltsev_mendes(n, params, seed):
     return [list(G.neighbors(i)) for i in G.nodes]
 
 
+try:
+    # Cython-accelerated drop-in replacements (build: python3 setup_fast.py build_ext --inplace).
+    # NOTE: uses a C++ RNG, so a given seed produces different graphs than the pure-Python versions.
+    from ramsey_netcom.generators_fast import (
+        generator_local_search,
+        generator_bubbles,
+        generator_dup_split,
+        average_shortest_path_multiplicity_csr as _fast_multiplicity,
+    )
+except ImportError:
+    _fast_multiplicity = None  # use the pure-Python versions defined above
+
+
 def generator(n, params, seed):
     """a graph generator calling different models"""
 
@@ -847,6 +860,13 @@ def heat_capacity(
 
 
 def average_shortest_path_multiplicity(g):
+    if _fast_multiplicity is not None:
+        A = gt.adjacency(g).tocsr()
+        return _fast_multiplicity(
+            np.ascontiguousarray(A.indptr, dtype=np.int32),
+            np.ascontiguousarray(A.indices, dtype=np.int32),
+            g.num_vertices(),
+        )
     v = g.vertices()
     return np.mean(
         [gt.count_shortest_paths(g, i, j) for i, j in itertools.combinations(v, r=2)]
@@ -935,7 +955,7 @@ def n_communities_vs_n(
                 c.append(gt.vertex_average(g, gt.local_clustering(g))[0])
                 d = np.mean(gt.shortest_distance(g))
                 diameter.append(d)
-            multipath.append(get_multipath(g))
+            multipath.append(average_shortest_path_multiplicity(g))
             mean_k_, mean_kk_ = get_degrees(g)
             mean_k.append(mean_k_)
             mean_kk.append(mean_kk_)
@@ -947,7 +967,7 @@ def n_communities_vs_n(
                 c_rnd.append(gt.vertex_average(g, gt.local_clustering(g))[0])
                 d_rnd = np.mean(gt.shortest_distance(g))
                 diameter_rnd.append(d_rnd)
-            multipath_rnd.append(get_multipath(g))
+            multipath_rnd.append(average_shortest_path_multiplicity(g))
         data["n"].append(n)
         x = np.array(kappa)
         data["unique_mean"].append(x.mean())
