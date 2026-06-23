@@ -292,22 +292,33 @@ def generator_dup_split_directed(int n, params, int seed):
     Split (prob 1 - q): new node i takes over j's out-arcs.
         j -> k  =>  i -> k  (for all k),  then add  j -> i
 
+    With duplicate_ends=False (default) the seed-path ends, node 0 (source) and
+    node 2 (sink), are never selected; with duplicate_ends=True any node is.
+
     Returns the out-adjacency (list of successor lists).
     """
     cdef double q = params["q"]
+    cdef bint duplicate_ends = params.get("duplicate_ends", False)
     cdef mt19937 g = mt19937(<unsigned int>seed)
     cdef vector[vector[int]] out
     cdef vector[vector[int]] inn
     cdef vector[int] tmp
     cdef int i, j, k, m, idx
 
-    out.resize(2)
-    inn.resize(2)
-    out[0].push_back(1)   # directed seed: a single arc 0 -> 1
+    out.resize(3)
+    inn.resize(3)
+    out[0].push_back(1)   # directed seed: a path 0 -> 1 -> 2
+    out[1].push_back(2)
     inn[1].push_back(0)
+    inn[2].push_back(1)
 
-    for i in range(2, n):
-        j = randint(g, i)
+    for i in range(3, n):
+        if duplicate_ends:
+            j = randint(g, i)
+        else:
+            j = randint(g, i)        # exclude the ends {0, 2}
+            while j == 0 or j == 2:
+                j = randint(g, i)
         if randdouble(g) < q:
             # duplication: copy predecessors then successors of j to new node i
             for idx in range(<int>inn[j].size()):

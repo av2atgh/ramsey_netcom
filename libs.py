@@ -2,6 +2,7 @@ import os
 import json
 import random
 import numpy as np
+import pandas as pd
 import graph_tool.all as gt
 import igraph as ig
 import networkx as nx
@@ -439,16 +440,28 @@ def generator_dup_split_directed(n, params, seed):
         for every arc  j -> k:  replace with  i -> k   (j keeps its in-arcs)
         add arc  j -> i
 
+    With duplicate_ends=False (default) the two endpoints of the seed path,
+    node 0 (source) and node 2 (sink), are never selected for duplication or
+    split, so they remain the unique source and sink. With duplicate_ends=True
+    every node is selectable.
+
     Returns the out-adjacency: out[v] is the list of successors of v.
     """
     np.random.seed(seed=seed)
     q = params["q"]
-    # directed seed: a single arc 0 -> 1
-    out = [[1], []]
-    inn = [[], [0]]
+    duplicate_ends = params.get("duplicate_ends", False)
+    # directed seed: a path 0 -> 1 -> 2
+    out = [[1], [2], []]
+    inn = [[], [0], [1]]
     is_duplicate = np.random.random(n) < q
-    for i in range(2, n):
-        j = np.random.randint(i)
+    for i in range(3, n):
+        if duplicate_ends:
+            j = np.random.randint(i)
+        else:
+            # select uniformly among all nodes except the ends {0, 2}
+            j = np.random.randint(i)
+            while j == 0 or j == 2:
+                j = np.random.randint(i)
         if is_duplicate[i]:
             for m in inn[j]:  # predecessors: m -> i
                 out[m].append(i)
@@ -597,6 +610,8 @@ def generator(n, params, seed):
         neighbours = generator_dup_divergence_symmetric(n, params, seed)
     elif params["model-"] == "ds":
         neighbours = generator_dup_split(n, params, seed)
+    elif params["model-"] == "dsd":
+        neighbours = generator_dup_split_directed(n, params, seed)
     elif params["model-"] == "ba":
         neighbours = generator_barabasi_albert(n, params, seed)
     elif params["model-"] == "ls":
@@ -1006,6 +1021,7 @@ def n_communities_vs_n(
     append=False,
     full=False,
     model=None,
+    directed=False,
 ):
     """wrapper to investigate community properties at different network sizes"""
 
@@ -1059,16 +1075,15 @@ def n_communities_vs_n(
         for r in range(nr):
             neighbours = generator(n, params, r)
             g, state, labels, n_communities = get_n_communities_from_neighbours(
-                neighbours, method=method
+                neighbours, method=method, directed=directed,
             )
-            gx = nx.from_edgelist([(s, t) for s, t, i in g.iter_edges([g.edge_index])])
             kappa.append(n_communities)
             e.append(total_energy(g))
             if full:
                 c.append(gt.vertex_average(g, gt.local_clustering(g))[0])
                 d = np.mean(gt.shortest_distance(g))
                 diameter.append(d)
-            multipath.append(average_shortest_path_multiplicity(g))
+            multipath.append(average_shortest_path_multiplicity(g, directed=directed))
             mean_k_, mean_kk_ = get_degrees(g)
             mean_k.append(mean_k_)
             mean_kk.append(mean_kk_)
@@ -1080,7 +1095,7 @@ def n_communities_vs_n(
                 c_rnd.append(gt.vertex_average(g, gt.local_clustering(g))[0])
                 d_rnd = np.mean(gt.shortest_distance(g))
                 diameter_rnd.append(d_rnd)
-            multipath_rnd.append(average_shortest_path_multiplicity(g))
+            multipath_rnd.append(average_shortest_path_multiplicity(g, directed=directed))
         data["n"].append(n)
         x = np.array(kappa)
         data["unique_mean"].append(x.mean())
