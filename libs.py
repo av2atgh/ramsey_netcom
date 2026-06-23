@@ -426,6 +426,46 @@ def generator_dup_split(n, params, seed):
     return neighbours
 
 
+def generator_dup_split_directed(n, params, seed):
+    """Directed Duplication-Split model with duplication rate q.
+
+    Each step adds one node by acting on a uniformly random existing node j:
+
+    Duplication (prob q) -- new node i copies j's arcs in both directions:
+        for every arc  m -> j:  add  m -> i
+        for every arc  j -> k:  add  i -> k
+
+    Split (prob 1 - q) -- new node i takes over j's out-arcs:
+        for every arc  j -> k:  replace with  i -> k   (j keeps its in-arcs)
+        add arc  j -> i
+
+    Returns the out-adjacency: out[v] is the list of successors of v.
+    """
+    np.random.seed(seed=seed)
+    q = params["q"]
+    # directed seed: a single arc 0 -> 1
+    out = [[1], []]
+    inn = [[], [0]]
+    is_duplicate = np.random.random(n) < q
+    for i in range(2, n):
+        j = np.random.randint(i)
+        if is_duplicate[i]:
+            for m in inn[j]:  # predecessors: m -> i
+                out[m].append(i)
+            for k in out[j]:  # successors: i -> k
+                inn[k].append(i)
+            inn.append(list(inn[j]))
+            out.append(list(out[j]))
+        else:
+            old_out = list(out[j])
+            for k in old_out:  # redirect j -> k into i -> k
+                inn[k][inn[k].index(j)] = i
+            out.append(old_out)  # out[i] = j's old out-arcs
+            inn.append([j])  # i's only predecessor is j
+            out[j] = [i]  # j now points only to i
+    return out
+
+
 def generator_dup_divergence(n, params, seed):
     """Duplication-Split model with duplication rate q."""
     np.random.seed(seed=seed)
@@ -529,11 +569,15 @@ try:
         generator_dup_split,
         generator_bubbles_2,
         generator_bubbles_2_L1_W3,
+        generator_dup_split_directed,
         nearest_neighbor,
         average_shortest_path_multiplicity_csr as _fast_multiplicity,
+        directed_average_shortest_path_multiplicity_csr as _fast_multiplicity_directed,
     )
 except ImportError:
-    _fast_multiplicity = None  # use the pure-Python versions defined above
+    # use the pure-Python versions defined above
+    _fast_multiplicity = None
+    _fast_multiplicity_directed = None
 
 
 def generator(n, params, seed):
@@ -613,6 +657,15 @@ def graphtool_from_neighbours(neighbours_input, directed=False):
         neighbours_ = np.array(neighbours[i])
         neighbours[i] = list(neighbours_[neighbours_ > i])
     return gt.Graph(dict(zip(range(n), neighbours)), directed=directed)
+
+
+def graphtool_directed_from_out_neighbours(out_neighbours):
+    """Build a directed graph-tool graph from an out-adjacency (list of successors)."""
+    n = len(out_neighbours)
+    g = gt.Graph(directed=True)
+    g.add_vertex(n)
+    g.add_edge_list([(i, k) for i in range(n) for k in out_neighbours[i]])
+    return g
 
 
 def igraph_from_neighbours(neighbours, directed=False):
@@ -865,7 +918,61 @@ def heat_capacity(
     return tau, s, c
 
 
-def average_shortest_path_multiplicity(g):
+def _out_csr(g):
+    """Out-edge adjacency of g in CSR form (int32 indptr/indices)."""
+    n = g.num_vertices()
+    indptr = np.zeros(n + 1, dtype=np.int32)
+    indptr[1:] = np.cumsum(g.get_out_degrees(np.arange(n)))
+    indices = np.empty(int(indptr[-1]), dtype=np.int32)
+    for v in range(n):
+        indices[indptr[v] : indptr[v + 1]] = g.get_out_neighbors(v)
+    return indptr, indices
+
+
+def average_shortest_path_multiplicity_directed_py(g):
+    """Mean number of shortest *directed* paths over all reachable (source, target)
+    ordered pairs. Reference Python implementation (the Cython version mirrors it).
+
+    For each source s, a forward BFS over out-edges yields sigma[t] = number of
+    shortest directed paths s -> t. The average is taken only over pairs where t
+    is reachable from s (unreachable pairs are excluded, not counted as zero).
+    """
+    n = g.num_vertices()
+    out = [np.asarray(g.get_out_neighbors(v)) for v in range(n)]
+    total = 0.0
+    reachable = 0
+    for s in range(n):
+        dist = np.full(n, -1, dtype=np.int64)
+        sigma = np.zeros(n)
+        dist[s] = 0
+        sigma[s] = 1.0
+        queue = [s]
+        head = 0
+        while head < len(queue):
+            u = queue[head]
+            head += 1
+            du = dist[u]
+            for w in out[u]:
+                if dist[w] == -1:
+                    dist[w] = du + 1
+                    sigma[w] = sigma[u]
+                    queue.append(w)
+                elif dist[w] == du + 1:
+                    sigma[w] += sigma[u]
+        for t in queue[1:]:  # reachable targets (s excluded)
+            total += sigma[t]
+        reachable += len(queue) - 1
+    if reachable == 0:
+        return float("nan")
+    return total / reachable
+
+
+def average_shortest_path_multiplicity(g, directed=False):
+    if directed:
+        if _fast_multiplicity_directed is not None:
+            indptr, indices = _out_csr(g)
+            return _fast_multiplicity_directed(indptr, indices, g.num_vertices())
+        return average_shortest_path_multiplicity_directed_py(g)
     if _fast_multiplicity is not None:
         A = gt.adjacency(g).tocsr()
         return _fast_multiplicity(

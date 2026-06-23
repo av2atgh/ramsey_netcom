@@ -58,6 +58,57 @@ def average_shortest_path_multiplicity_csr(int[::1] indptr, int[::1] indices, in
     return total / (<double>n * (<double>n - 1.0))
 
 
+# ---------------------------------------------------------------------------
+def directed_average_shortest_path_multiplicity_csr(int[::1] indptr, int[::1] indices, int n):
+    """Mean number of shortest *directed* paths over all reachable (source, target)
+    pairs, from an out-edge CSR adjacency.
+
+    Forward BFS per source over out-edges gives sigma[t] = number of shortest
+    directed paths s -> t. Only reachable pairs are averaged (the denominator is
+    the count of reachable ordered pairs, not n*(n-1)).
+    """
+    if n < 2:
+        return float("nan")
+    cdef vector[int] dist
+    cdef vector[double] sigma
+    cdef vector[int] queue
+    cdef double total = 0.0
+    cdef long reachable = 0
+    cdef int s, u, w, e, head, tail
+    dist.resize(n)
+    sigma.resize(n)
+    queue.resize(n)
+    with nogil:
+        for s in range(n):
+            for u in range(n):
+                dist[u] = -1
+                sigma[u] = 0.0
+            dist[s] = 0
+            sigma[s] = 1.0
+            queue[0] = s
+            head = 0
+            tail = 1
+            while head < tail:
+                u = queue[head]
+                head += 1
+                for e in range(indptr[u], indptr[u + 1]):
+                    w = indices[e]
+                    if dist[w] == -1:
+                        dist[w] = dist[u] + 1
+                        sigma[w] = sigma[u]
+                        queue[tail] = w
+                        tail += 1
+                    elif dist[w] == dist[u] + 1:
+                        sigma[w] += sigma[u]
+            # queue[1 .. tail-1] are exactly the reachable targets (s excluded)
+            for e in range(1, tail):
+                total += sigma[queue[e]]
+            reachable += tail - 1
+    if reachable == 0:
+        return float("nan")
+    return total / <double>reachable
+
+
 cdef extern from "<random>" namespace "std":
     cdef cppclass mt19937:
         mt19937()
@@ -230,6 +281,59 @@ def generator_dup_split(int n, params, int seed):
             newnb.push_back(k)
             nb.push_back(newnb)
     return nb
+
+
+# ---------------------------------------------------------------------------
+def generator_dup_split_directed(int n, params, int seed):
+    """Directed Duplication-Split model with duplication rate q.
+
+    Duplication (prob q): new node i copies j's in- and out-arcs.
+        m -> j  =>  m -> i      and      j -> k  =>  i -> k
+    Split (prob 1 - q): new node i takes over j's out-arcs.
+        j -> k  =>  i -> k  (for all k),  then add  j -> i
+
+    Returns the out-adjacency (list of successor lists).
+    """
+    cdef double q = params["q"]
+    cdef mt19937 g = mt19937(<unsigned int>seed)
+    cdef vector[vector[int]] out
+    cdef vector[vector[int]] inn
+    cdef vector[int] tmp
+    cdef int i, j, k, m, idx
+
+    out.resize(2)
+    inn.resize(2)
+    out[0].push_back(1)   # directed seed: a single arc 0 -> 1
+    inn[1].push_back(0)
+
+    for i in range(2, n):
+        j = randint(g, i)
+        if randdouble(g) < q:
+            # duplication: copy predecessors then successors of j to new node i
+            for idx in range(<int>inn[j].size()):
+                out[inn[j][idx]].push_back(i)
+            for idx in range(<int>out[j].size()):
+                inn[out[j][idx]].push_back(i)
+            tmp = inn[j]            # copy before the outer vectors grow (avoid aliasing)
+            inn.push_back(tmp)
+            tmp = out[j]
+            out.push_back(tmp)
+        else:
+            # split: redirect every j -> k into i -> k, then add j -> i
+            for idx in range(<int>out[j].size()):
+                k = out[j][idx]
+                for m in range(<int>inn[k].size()):
+                    if inn[k][m] == j:
+                        inn[k][m] = i
+                        break
+            tmp = out[j]           # out[i] = j's old out-arcs
+            out.push_back(tmp)
+            tmp.clear()
+            tmp.push_back(j)       # inn[i] = [j]
+            inn.push_back(tmp)
+            out[j].clear()         # j now points only to i
+            out[j].push_back(i)
+    return out
 
 
 # ---------------------------------------------------------------------------
