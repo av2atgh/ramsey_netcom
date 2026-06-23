@@ -527,6 +527,9 @@ try:
         generator_local_search,
         generator_bubbles,
         generator_dup_split,
+        generator_bubbles_2,
+        generator_bubbles_2_L1_W3,
+        nearest_neighbor,
         average_shortest_path_multiplicity_csr as _fast_multiplicity,
     )
 except ImportError:
@@ -825,7 +828,8 @@ def find_instances_with_communities(
 
 def total_energy(g):
     a = gt.adjacency(g)
-    lambda_ = np.real(np.linalg.eigvals(a.toarray()))
+    # adjacency is symmetric -> eigvalsh is ~6x faster than the general eigvals
+    lambda_ = np.linalg.eigvalsh(a.toarray())
     return np.sum(np.maximum(0, lambda_))
 
 
@@ -844,7 +848,9 @@ def heat_capacity(
         for i in nodes_with_links:
             L[i, np.array(neighbours[i])] = -1
             L[i, i] = len(neighbours[i])
-    lambda_ = np.real(np.linalg.eigvals(L))
+    # the random-walk Laplacian is not symmetric (row-normalized); the standard
+    # Laplacian is, so use the faster symmetric solver in that case.
+    lambda_ = np.real(np.linalg.eigvals(L)) if random_walk else np.linalg.eigvalsh(L)
     lambda_[lambda_ < 0] = 0
     tau = 1 / np.exp(np.linspace(np.log(inv_tau_min), np.log(inv_tau_max), n_points))
     lambda_v = np.repeat(lambda_[:, np.newaxis], n_points, axis=1)
