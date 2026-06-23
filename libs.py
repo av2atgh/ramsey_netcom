@@ -436,9 +436,13 @@ def generator_dup_split_directed(n, params, seed):
         for every arc  m -> j:  add  m -> i
         for every arc  j -> k:  add  i -> k
 
-    Split (prob 1 - q) -- new node i takes over j's out-arcs:
-        for every arc  j -> k:  replace with  i -> k   (j keeps its in-arcs)
-        add arc  j -> i
+    Split (prob 1 - q) -- two rules, selected by params["split"]:
+        "node" (default): new node i takes over ALL of j's out-arcs
+            for every arc  j -> k:  replace with  i -> k   (j keeps in-arcs)
+            add arc  j -> i
+        "link": subdivide a single random out-arc j -> k of j
+            replace  j -> k  with  j -> i -> k
+        (if j has no out-arc, "link" falls back to "node".)
 
     With duplicate_ends=False (default) the two endpoints of the seed path,
     node 0 (source) and node 2 (sink), are never selected for duplication or
@@ -450,6 +454,7 @@ def generator_dup_split_directed(n, params, seed):
     np.random.seed(seed=seed)
     q = params["q"]
     duplicate_ends = params.get("duplicate_ends", False)
+    link_split = params.get("split", "node") == "link"
     # directed seed: a path 0 -> 1 -> 2
     out = [[1], [2], []]
     inn = [[], [0], [1]]
@@ -469,7 +474,16 @@ def generator_dup_split_directed(n, params, seed):
                 inn[k].append(i)
             inn.append(list(inn[j]))
             out.append(list(out[j]))
+        elif link_split and out[j]:
+            # link split: subdivide one random out-arc j -> k into j -> i -> k
+            l = np.random.randint(len(out[j]))
+            k = out[j][l]
+            out[j][l] = i  # j -> i
+            inn[k][inn[k].index(j)] = i  # k's predecessor j -> i
+            out.append([k])  # i -> k
+            inn.append([j])  # i's predecessor is j
         else:
+            # node split: new node i takes over all of j's out-arcs
             old_out = list(out[j])
             for k in old_out:  # redirect j -> k into i -> k
                 inn[k][inn[k].index(j)] = i

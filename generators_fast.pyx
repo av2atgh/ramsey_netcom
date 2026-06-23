@@ -299,11 +299,12 @@ def generator_dup_split_directed(int n, params, int seed):
     """
     cdef double q = params["q"]
     cdef bint duplicate_ends = params.get("duplicate_ends", False)
+    cdef bint link_split = params.get("split", "node") == "link"
     cdef mt19937 g = mt19937(<unsigned int>seed)
     cdef vector[vector[int]] out
     cdef vector[vector[int]] inn
     cdef vector[int] tmp
-    cdef int i, j, k, m, idx
+    cdef int i, j, k, l, m, idx
 
     out.resize(3)
     inn.resize(3)
@@ -329,8 +330,23 @@ def generator_dup_split_directed(int n, params, int seed):
             inn.push_back(tmp)
             tmp = out[j]
             out.push_back(tmp)
+        elif link_split and out[j].size() > 0:
+            # link split: subdivide one random out-arc j -> k into j -> i -> k
+            l = randint(g, <int>out[j].size())
+            k = out[j][l]
+            out[j][l] = i          # j -> i
+            for m in range(<int>inn[k].size()):
+                if inn[k][m] == j:
+                    inn[k][m] = i  # k's predecessor j -> i
+                    break
+            tmp.clear()
+            tmp.push_back(k)       # out[i] = [k]
+            out.push_back(tmp)
+            tmp.clear()
+            tmp.push_back(j)       # inn[i] = [j]
+            inn.push_back(tmp)
         else:
-            # split: redirect every j -> k into i -> k, then add j -> i
+            # node split: redirect every j -> k into i -> k, then add j -> i
             for idx in range(<int>out[j].size()):
                 k = out[j][idx]
                 for m in range(<int>inn[k].size()):
