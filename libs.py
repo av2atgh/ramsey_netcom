@@ -2,6 +2,7 @@ import os
 import json
 import random
 import numpy as np
+import pandas as pd
 import graph_tool.all as gt
 import igraph as ig
 import networkx as nx
@@ -426,6 +427,72 @@ def generator_dup_split(n, params, seed):
     return neighbours
 
 
+def generator_dup_split_directed(n, params, seed):
+    """Directed Duplication-Split model with duplication rate q.
+
+    Each step adds one node by acting on a uniformly random existing node j:
+
+    Duplication (prob q) -- new node i copies j's arcs in both directions:
+        for every arc  m -> j:  add  m -> i
+        for every arc  j -> k:  add  i -> k
+
+    Split (prob 1 - q) -- two rules, selected by params["split"]:
+        "node" (default): new node i takes over ALL of j's out-arcs
+            for every arc  j -> k:  replace with  i -> k   (j keeps in-arcs)
+            add arc  j -> i
+        "link": subdivide a single random out-arc j -> k of j
+            replace  j -> k  with  j -> i -> k
+        (if j has no out-arc, "link" falls back to "node".)
+
+    With duplicate_ends=False (default) the two endpoints of the seed path,
+    node 0 (source) and node 2 (sink), are never selected for duplication or
+    split, so they remain the unique source and sink. With duplicate_ends=True
+    every node is selectable.
+
+    Returns the out-adjacency: out[v] is the list of successors of v.
+    """
+    np.random.seed(seed=seed)
+    q = params["q"]
+    duplicate_ends = params.get("duplicate_ends", False)
+    link_split = params.get("split", "node") == "link"
+    # directed seed: a path 0 -> 1 -> 2
+    out = [[1], [2], []]
+    inn = [[], [0], [1]]
+    is_duplicate = np.random.random(n) < q
+    for i in range(3, n):
+        if duplicate_ends:
+            j = np.random.randint(i)
+        else:
+            # select uniformly among all nodes except the ends {0, 2}
+            j = np.random.randint(i)
+            while j == 0 or j == 2:
+                j = np.random.randint(i)
+        if is_duplicate[i]:
+            for m in inn[j]:  # predecessors: m -> i
+                out[m].append(i)
+            for k in out[j]:  # successors: i -> k
+                inn[k].append(i)
+            inn.append(list(inn[j]))
+            out.append(list(out[j]))
+        elif link_split and out[j]:
+            # link split: subdivide one random out-arc j -> k into j -> i -> k
+            l = np.random.randint(len(out[j]))
+            k = out[j][l]
+            out[j][l] = i  # j -> i
+            inn[k][inn[k].index(j)] = i  # k's predecessor j -> i
+            out.append([k])  # i -> k
+            inn.append([j])  # i's predecessor is j
+        else:
+            # node split: new node i takes over all of j's out-arcs
+            old_out = list(out[j])
+            for k in old_out:  # redirect j -> k into i -> k
+                inn[k][inn[k].index(j)] = i
+            out.append(old_out)  # out[i] = j's old out-arcs
+            inn.append([j])  # i's only predecessor is j
+            out[j] = [i]  # j now points only to i
+    return out
+
+
 def generator_dup_divergence(n, params, seed):
     """Duplication-Split model with duplication rate q."""
     np.random.seed(seed=seed)
@@ -520,6 +587,26 @@ def generator_dorogovtsev_goltsev_mendes(n, params, seed):
     return [list(G.neighbors(i)) for i in G.nodes]
 
 
+try:
+    # Cython-accelerated drop-in replacements (build: python3 setup_fast.py build_ext --inplace).
+    # NOTE: uses a C++ RNG, so a given seed produces different graphs than the pure-Python versions.
+    from ramsey_netcom.generators_fast import (
+        generator_local_search,
+        generator_bubbles,
+        generator_dup_split,
+        generator_bubbles_2,
+        generator_bubbles_2_L1_W3,
+        generator_dup_split_directed,
+        nearest_neighbor,
+        average_shortest_path_multiplicity_csr as _fast_multiplicity,
+        directed_average_shortest_path_multiplicity_csr as _fast_multiplicity_directed,
+    )
+except ImportError:
+    # use the pure-Python versions defined above
+    _fast_multiplicity = None
+    _fast_multiplicity_directed = None
+
+
 def generator(n, params, seed):
     """a graph generator calling different models"""
 
@@ -537,6 +624,8 @@ def generator(n, params, seed):
         neighbours = generator_dup_divergence_symmetric(n, params, seed)
     elif params["model-"] == "ds":
         neighbours = generator_dup_split(n, params, seed)
+    elif params["model-"] == "dsd":
+        neighbours = generator_dup_split_directed(n, params, seed)
     elif params["model-"] == "ba":
         neighbours = generator_barabasi_albert(n, params, seed)
     elif params["model-"] == "ls":
@@ -597,6 +686,15 @@ def graphtool_from_neighbours(neighbours_input, directed=False):
         neighbours_ = np.array(neighbours[i])
         neighbours[i] = list(neighbours_[neighbours_ > i])
     return gt.Graph(dict(zip(range(n), neighbours)), directed=directed)
+
+
+def graphtool_directed_from_out_neighbours(out_neighbours):
+    """Build a directed graph-tool graph from an out-adjacency (list of successors)."""
+    n = len(out_neighbours)
+    g = gt.Graph(directed=True)
+    g.add_vertex(n)
+    g.add_edge_list([(i, k) for i in range(n) for k in out_neighbours[i]])
+    return g
 
 
 def igraph_from_neighbours(neighbours, directed=False):
@@ -812,7 +910,8 @@ def find_instances_with_communities(
 
 def total_energy(g):
     a = gt.adjacency(g)
-    lambda_ = np.real(np.linalg.eigvals(a.toarray()))
+    # adjacency is symmetric -> eigvalsh is ~6x faster than the general eigvals
+    lambda_ = np.linalg.eigvalsh(a.toarray())
     return np.sum(np.maximum(0, lambda_))
 
 
@@ -831,7 +930,9 @@ def heat_capacity(
         for i in nodes_with_links:
             L[i, np.array(neighbours[i])] = -1
             L[i, i] = len(neighbours[i])
-    lambda_ = np.real(np.linalg.eigvals(L))
+    # the random-walk Laplacian is not symmetric (row-normalized); the standard
+    # Laplacian is, so use the faster symmetric solver in that case.
+    lambda_ = np.real(np.linalg.eigvals(L)) if random_walk else np.linalg.eigvalsh(L)
     lambda_[lambda_ < 0] = 0
     tau = 1 / np.exp(np.linspace(np.log(inv_tau_min), np.log(inv_tau_max), n_points))
     lambda_v = np.repeat(lambda_[:, np.newaxis], n_points, axis=1)
@@ -846,7 +947,68 @@ def heat_capacity(
     return tau, s, c
 
 
-def average_shortest_path_multiplicity(g):
+def _out_csr(g):
+    """Out-edge adjacency of g in CSR form (int32 indptr/indices)."""
+    n = g.num_vertices()
+    indptr = np.zeros(n + 1, dtype=np.int32)
+    indptr[1:] = np.cumsum(g.get_out_degrees(np.arange(n)))
+    indices = np.empty(int(indptr[-1]), dtype=np.int32)
+    for v in range(n):
+        indices[indptr[v] : indptr[v + 1]] = g.get_out_neighbors(v)
+    return indptr, indices
+
+
+def average_shortest_path_multiplicity_directed_py(g):
+    """Mean number of shortest *directed* paths over all reachable (source, target)
+    ordered pairs. Reference Python implementation (the Cython version mirrors it).
+
+    For each source s, a forward BFS over out-edges yields sigma[t] = number of
+    shortest directed paths s -> t. The average is taken only over pairs where t
+    is reachable from s (unreachable pairs are excluded, not counted as zero).
+    """
+    n = g.num_vertices()
+    out = [np.asarray(g.get_out_neighbors(v)) for v in range(n)]
+    total = 0.0
+    reachable = 0
+    for s in range(n):
+        dist = np.full(n, -1, dtype=np.int64)
+        sigma = np.zeros(n)
+        dist[s] = 0
+        sigma[s] = 1.0
+        queue = [s]
+        head = 0
+        while head < len(queue):
+            u = queue[head]
+            head += 1
+            du = dist[u]
+            for w in out[u]:
+                if dist[w] == -1:
+                    dist[w] = du + 1
+                    sigma[w] = sigma[u]
+                    queue.append(w)
+                elif dist[w] == du + 1:
+                    sigma[w] += sigma[u]
+        for t in queue[1:]:  # reachable targets (s excluded)
+            total += sigma[t]
+        reachable += len(queue) - 1
+    if reachable == 0:
+        return float("nan")
+    return total / reachable
+
+
+def average_shortest_path_multiplicity(g, directed=False):
+    if directed:
+        if _fast_multiplicity_directed is not None:
+            indptr, indices = _out_csr(g)
+            return _fast_multiplicity_directed(indptr, indices, g.num_vertices())
+        return average_shortest_path_multiplicity_directed_py(g)
+    if _fast_multiplicity is not None:
+        A = gt.adjacency(g).tocsr()
+        return _fast_multiplicity(
+            np.ascontiguousarray(A.indptr, dtype=np.int32),
+            np.ascontiguousarray(A.indices, dtype=np.int32),
+            g.num_vertices(),
+        )
     v = g.vertices()
     return np.mean(
         [gt.count_shortest_paths(g, i, j) for i, j in itertools.combinations(v, r=2)]
@@ -873,6 +1035,7 @@ def n_communities_vs_n(
     append=False,
     full=False,
     model=None,
+    directed=False,
 ):
     """wrapper to investigate community properties at different network sizes"""
 
@@ -926,16 +1089,15 @@ def n_communities_vs_n(
         for r in range(nr):
             neighbours = generator(n, params, r)
             g, state, labels, n_communities = get_n_communities_from_neighbours(
-                neighbours, method=method
+                neighbours, method=method, directed=directed,
             )
-            gx = nx.from_edgelist([(s, t) for s, t, i in g.iter_edges([g.edge_index])])
             kappa.append(n_communities)
             e.append(total_energy(g))
             if full:
                 c.append(gt.vertex_average(g, gt.local_clustering(g))[0])
                 d = np.mean(gt.shortest_distance(g))
                 diameter.append(d)
-            multipath.append(get_multipath(g))
+            multipath.append(average_shortest_path_multiplicity(g, directed=directed))
             mean_k_, mean_kk_ = get_degrees(g)
             mean_k.append(mean_k_)
             mean_kk.append(mean_kk_)
@@ -947,7 +1109,7 @@ def n_communities_vs_n(
                 c_rnd.append(gt.vertex_average(g, gt.local_clustering(g))[0])
                 d_rnd = np.mean(gt.shortest_distance(g))
                 diameter_rnd.append(d_rnd)
-            multipath_rnd.append(get_multipath(g))
+            multipath_rnd.append(average_shortest_path_multiplicity(g, directed=directed))
         data["n"].append(n)
         x = np.array(kappa)
         data["unique_mean"].append(x.mean())

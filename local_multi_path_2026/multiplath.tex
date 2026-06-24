@@ -308,7 +308,7 @@ c_{2, \gamma=3} \sim \ln n.
 \subsection*{$\langle\mu\rangle$: Erd\H{o}s--R\'enyi graphs}
 \label{muER}
 
-\noindent Here we calculate the average shortest path multiplicity for  an Erd\H{o}s--R\'enyi graph with $n$ nodes and link probability $p$, using the framework developed in Refs.~\cite{Fronczak2004,Blondel2007}. Throughout, $c= np$ denotes the mean degree, $D=\ln n /\ln c$ the typical distance between two nodes and we assume $c>1$. We calculate the average shortest path multiplicity using a mean-field approach. The paths between two nodes are assumed independent and their existence determined by $p$ and $n$. We denote by $m_d$ the number of potential paths between two nodes at a distance $d$, $M_d$ the number of realized paths between two nodes at a distance $d$ and $F_d$ the probability that that no path shorter than $d$ exists.
+\noindent Here we calculate the average shortest path multiplicity for  an Erd\H{o}s--R\'enyi graph with $n$ nodes and link probability $p$, building on previous calculations in Refs.~\cite{Fronczak2004, distance_stats_baronchelli_2006, Blondel2007, SoleRibalta2019}. Throughout, $c= np$ denotes the mean degree, $D=\ln n /\ln c$ the typical distance between two nodes and we assume $c>1$. We calculate the average shortest path multiplicity using a mean-field approach. The paths between two nodes are assumed independent and their existence determined by $p$ and $n$. We denote by $m_d$ the number of potential paths between two nodes at a distance $d$, $M_d$ the number of realized paths between two nodes at a distance $d$ and $F_d$ the probability that that no path shorter than $d$ exists.
 
 The expected number of shortest paths between two random vertices equals the expected number of length-$d$ paths $\langle M_d\rangle$ weighted by the probability $F_{d-1}$ that no shorter path exists,
 %
@@ -338,14 +338,14 @@ F_d = \prod_{k=1}^d \Pr(M_k=0) = e^{-\sum_{k=1}^{d}\langle M_k\rangle}.
 \label{eq:Fsum}
 \end{equation}
 %
-The exponent is a geometric series of ratio $c>1$, dominated by its last term: $\sum_{k=1}^{d}\langle M_k\rangle \approx c^{d-D}$ for large $n$. Thus
+The exponent is a geometric series of ratio $c>1$, dominated by its last term: $\sum_{k=1}^{d}\langle M_k\rangle \approx c^{d-D}$ for large $d$. Thus
 %
 \begin{equation}
 F_d \approx  \exp\left( -c^{d-D} \right),
 \label{Fd}
 \end{equation}
 %
-recovering the form of Refs.~\cite{Fronczak2004,Blondel2007}.
+recapitulating Eq. 14 in Ref.~\cite{Fronczak2004} and Eq. 3 in Ref.~\cite{Blondel2007}.
 
 Substituting Eq.~\eqref{Md} and Eq.~\eqref{Fd}) into \eqref{mu_avg} we finally obtain
 %
@@ -390,7 +390,7 @@ F_d &=& (1-p_1)^{m_1}\prod_{k=2}^{d}\left(1- p_1p_2^{k-1}\right)^{m_k}, \nonumbe
 \label{Fdk}
 \end{eqnarray}
 %
-The exponent in the latter equation is a geometric series of ratio $c_2>1$, dominated by its last term: $\sum_{k=1}^{d}\langle M_k\rangle \approx \langle M_d\rangle$ for large $n$. Thus
+The exponent in the latter equation is a geometric series of ratio $c_2>1$, dominated by its last term: $\sum_{k=1}^{d}\langle M_k\rangle \approx \langle M_d\rangle$ for large $d$. Thus
 %
 \begin{equation}
 F_d \approx \exp\!\left[ - c_1 c_2^{d - D_2 - 1} \right] .
