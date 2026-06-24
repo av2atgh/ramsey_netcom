@@ -6,7 +6,7 @@
 %Control: page (0) single
 %Control: year (1) truncated
 %Control: production of eprint (0) enabled
-\begin{thebibliography}{25}%
+\begin{thebibliography}{27}%
 \makeatletter
 \providecommand \@ifxundefined [1]{%
  \@ifx{#1\undefined}
@@ -267,6 +267,15 @@
   }\href {\doibase 10.1103/PhysRevE.70.056110} {\bibfield  {journal} {\bibinfo
   {journal} {Phys. Rev. E}\ }\textbf {\bibinfo {volume} {70}},\ \bibinfo
   {pages} {056110} (\bibinfo {year} {2004})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Baronchelli}\ and\ \citenamefont
+  {Loreto}(2006)}]{distance_stats_baronchelli_2006}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Baronchelli}}\ and\ \bibinfo {author} {\bibfnamefont {V.}~\bibnamefont
+  {Loreto}},\ }\href {\doibase 10.1103/PhysRevE.73.026103} {\bibfield
+  {journal} {\bibinfo  {journal} {Phys. Rev. E}\ }\textbf {\bibinfo {volume}
+  {73}},\ \bibinfo {pages} {026103} (\bibinfo {year} {2006})}\BibitemShut
+  {NoStop}%
 \bibitem [{\citenamefont {Blondel}\ \emph {et~al.}(2007)\citenamefont
   {Blondel}, \citenamefont {Guillaume}, \citenamefont {Hendrickx},\ and\
   \citenamefont {Jungers}}]{Blondel2007}%
@@ -278,6 +287,17 @@
   {Jungers}},\ }\href {\doibase 10.1103/PhysRevE.76.066101} {\bibfield
   {journal} {\bibinfo  {journal} {Phys. Rev. E}\ }\textbf {\bibinfo {volume}
   {76}},\ \bibinfo {pages} {066101} (\bibinfo {year} {2007})}\BibitemShut
+  {NoStop}%
+\bibitem [{\citenamefont {Sol{\'e}-Ribalta}\ \emph {et~al.}(2019)\citenamefont
+  {Sol{\'e}-Ribalta}, \citenamefont {Arenas},\ and\ \citenamefont
+  {G{\'o}mez}}]{SoleRibalta2019}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Sol{\'e}-Ribalta}}, \bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Arenas}}, \ and\ \bibinfo {author} {\bibfnamefont {S.}~\bibnamefont
+  {G{\'o}mez}},\ }\href {\doibase 10.1088/1367-2630/ab023e} {\bibfield
+  {journal} {\bibinfo  {journal} {New J. Phys.}\ }\textbf {\bibinfo {volume}
+  {21}},\ \bibinfo {pages} {035003} (\bibinfo {year} {2019})}\BibitemShut
   {NoStop}%
 \bibitem [{\citenamefont {Erd{\H{o}}s}\ and\ \citenamefont
   {R{\'e}nyi}(1960)}]{ErdosRenyi1960}%
