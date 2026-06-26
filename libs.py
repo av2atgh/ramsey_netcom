@@ -1015,23 +1015,43 @@ def average_shortest_path_multiplicity(g, directed=False):
     )
 
 
+def connected_pairs_fraction(g):
+    """Mean over all ordered node pairs of (shortest-path multiplicity > 0), i.e.
+    the fraction of node pairs that are connected.
+
+    Computed from the connected-component sizes: the reachable ordered pairs are
+    sum_c s_c (s_c - 1), normalized by n (n - 1) (same normalization as the
+    undirected average_shortest_path_multiplicity).
+    """
+    n = g.num_vertices()
+    if n < 2:
+        return float("nan")
+    _, hist = gt.label_components(g, directed=False)
+    sizes = np.asarray(hist, dtype=float)
+    return float(np.sum(sizes * (sizes - 1)) / (n * (n - 1)))
+
+
 def shortest_path_multiplicity_random_removal(g, n_realizations=100):
     """Average shortest-path multiplicity vs network size under random node removal.
 
     Target sizes are n_nodes_array = [n, 2**l, 2**(l-1), ..., 2**3] with
     l = floor(log2(n)) (a leading 2**l == n is dropped). For each realization the
     graph is copied and nodes are removed at random progressively down through the
-    target sizes, measuring the average shortest-path multiplicity (mean over node
-    pairs) at each size. Results are averaged over n_realizations.
+    target sizes, measuring at each size the average shortest-path multiplicity
+    (mean over node pairs) and the fraction of connected pairs
+    (mean over node pairs of multiplicity > 0). Results are averaged over
+    n_realizations.
 
-    Returns (n_nodes_array, multiplicity_array).
+    Returns (n_nodes_array, multiplicity_array, connected_pairs_array).
     """
     n = g.num_vertices()
     l = int(np.log(n) / np.log(2))
     n_nodes_array = [n] + [2 ** k for k in range(l, 2, -1) if 2 ** k < n]
     mult = np.zeros(len(n_nodes_array))
+    conn = np.zeros(len(n_nodes_array))
     # full graph (i == 0) has no removal -> deterministic, compute once
     mult[0] = average_shortest_path_multiplicity(g)
+    conn[0] = connected_pairs_fraction(g)
     for _ in range(n_realizations):
         g_r = g.copy()
         for i in range(1, len(n_nodes_array)):
@@ -1041,8 +1061,10 @@ def shortest_path_multiplicity_random_removal(g, n_realizations=100):
             )
             g_r.remove_vertex(victims, fast=True)
             mult[i] += average_shortest_path_multiplicity(g_r)
+            conn[i] += connected_pairs_fraction(g_r)
     mult[1:] /= n_realizations
-    return n_nodes_array, mult
+    conn[1:] /= n_realizations
+    return n_nodes_array, mult, conn
 
 
 def load_network(name):
