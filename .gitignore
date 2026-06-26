@@ -14,3 +14,7 @@ _verify_fast.py
 
 # local-only files (not part of the repo)
 recursion.py
+
+# generated example figures
+examples/*.png
+*_multiplicity*.png
