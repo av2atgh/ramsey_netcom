@@ -1,15 +1,20 @@
-"""Metrics for BioGRID protein-interaction networks (yeast, fly, worm, human).
+"""Metrics for every BioGRID per-organism protein-interaction network.
 
 Downloads BioGRID's combined per-organism archive (BIOGRID-ORGANISM-LATEST.tab3,
-cached under examples/data/), then for each target organism builds the undirected
-*physical* interaction graph (Experimental System Type == "physical") and reports
-the number of nodes, the average shortest-path multiplicity (mean over node pairs)
-and the fraction of connected node pairs. One row per organism -> CSV.
+cached under examples/data/), then for each organism in the archive builds the
+undirected *physical* interaction graph (Experimental System Type == "physical")
+and reports the number of nodes, the average shortest-path multiplicity (mean
+over node pairs) and the fraction of connected node pairs. One row per organism
+-> examples/biogrid_interactome_metrics.csv.
 
-Run from anywhere (note: large one-time download, and human is slow):
+Note: large one-time download, and the big organisms (e.g. human) are slow.
+Organisms with no physical interactions report n=0 and nan metrics.
+
+Run from anywhere:
     python examples/biogrid_interactome_metrics.py
 """
 import os
+import re
 import shutil
 import sys
 import zipfile
@@ -27,16 +32,10 @@ URL = "https://downloads.thebiogrid.org/Download/BioGRID/Latest-Release/BIOGRID-
 ZIP_PATH = os.path.join(DATA_DIR, "BIOGRID-ORGANISM-LATEST.tab3.zip")
 OUT_CSV = os.path.join(HERE, "biogrid_interactome_metrics.csv")
 
-# (label, BioGRID organism file name fragment)
-ORGANISMS = [
-    ("yeast", "Saccharomyces_cerevisiae_S288c"),
-    ("fly", "Drosophila_melanogaster"),
-    ("worm", "Caenorhabditis_elegans"),
-    ("human", "Homo_sapiens"),
-]
-
 # tab3 column indices (0-based)
 COL_BIOGRID_A, COL_BIOGRID_B, COL_SYS_TYPE = 3, 4, 12
+
+_MEMBER_RE = re.compile(r"BIOGRID-ORGANISM-(.+)-\d+\.\d+\.\d+\.tab3\.txt$")
 
 
 def ensure_data():
@@ -50,11 +49,13 @@ def ensure_data():
         print(f"  saved {os.path.getsize(ZIP_PATH) / 1e6:.0f} MB")
 
 
-def build_physical_graph(zf, fragment):
+def organism_of(member):
+    m = _MEMBER_RE.search(os.path.basename(member))
+    return m.group(1) if m else os.path.basename(member)
+
+
+def build_physical_graph(zf, member):
     """Undirected physical-interaction graph for one organism file in the zip."""
-    member = next(
-        m for m in zf.namelist() if fragment in m and m.endswith(".tab3.txt")
-    )
     edges = []
     with zf.open(member) as fh:
         next(fh)  # header
@@ -67,28 +68,34 @@ def build_physical_graph(zf, fragment):
             except ValueError:
                 continue
     g = gt.Graph(directed=False)
-    g.add_edge_list(edges, hashed=True, hash_type="int64_t")  # BioGRID IDs
-    gt.remove_parallel_edges(g)
-    gt.remove_self_loops(g)
-    return g, member
+    if edges:
+        g.add_edge_list(edges, hashed=True, hash_type="int64_t")  # BioGRID IDs
+        gt.remove_parallel_edges(g)
+        gt.remove_self_loops(g)
+    return g
 
 
 def main():
     ensure_data()
-    rows = []
     with zipfile.ZipFile(ZIP_PATH) as zf:
-        for label, fragment in ORGANISMS:
-            g, member = build_physical_graph(zf, fragment)
+        members = sorted(
+            m for m in zf.namelist()
+            if "BIOGRID-ORGANISM-" in m and m.endswith(".tab3.txt")
+        )
+        rows = []
+        for i, member in enumerate(members, 1):
+            org = organism_of(member)
+            g = build_physical_graph(zf, member)
             n, e = g.num_vertices(), g.num_edges()
             mult = L.average_shortest_path_multiplicity(g)
             conn = L.connected_pairs_fraction(g)
-            rows.append((label, n, e, mult, conn))
-            print(f"{label:6s} n={n:6d} E={e:7d} mult={mult:.4f} conn={conn:.4f}  [{member}]")
+            rows.append((org, n, e, mult, conn))
+            print(f"[{i}/{len(members)}] {org}: n={n} E={e} mult={mult:.4f} conn={conn:.4f}")
 
     with open(OUT_CSV, "w") as f:
         f.write("organism,n_nodes,n_edges,multiplicity,connected_pairs\n")
-        for label, n, e, mult, conn in rows:
-            f.write(f"{label},{n},{e},{mult:.8g},{conn:.8g}\n")
+        for org, n, e, mult, conn in rows:
+            f.write(f"{org},{n},{e},{mult:.8g},{conn:.8g}\n")
     print("saved", OUT_CSV)
 
 
