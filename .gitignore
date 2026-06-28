@@ -18,4 +18,5 @@ recursion.py
 # generated example outputs
 examples/*.png
 examples/*.csv
+examples/data/
 *_multiplicity*.png
