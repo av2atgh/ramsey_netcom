@@ -87,15 +87,19 @@ def main():
             org = organism_of(member)
             g = build_physical_graph(zf, member)
             n, e = g.num_vertices(), g.num_edges()
+            mean_k, excess_k = L.get_degrees(g) if n else (float("nan"), float("nan"))
             mult = L.average_shortest_path_multiplicity(g)
             conn = L.connected_pairs_fraction(g)
-            rows.append((org, n, e, mult, conn))
-            print(f"[{i}/{len(members)}] {org}: n={n} E={e} mult={mult:.4f} conn={conn:.4f}")
+            rows.append((org, n, e, mean_k, excess_k, mult, conn))
+            print(
+                f"[{i}/{len(members)}] {org}: n={n} E={e} <k>={mean_k:.2f} "
+                f"excess={excess_k:.2f} mult={mult:.4f} conn={conn:.4f}"
+            )
 
     with open(OUT_CSV, "w") as f:
-        f.write("organism,n_nodes,n_edges,multiplicity,connected_pairs\n")
-        for org, n, e, mult, conn in rows:
-            f.write(f"{org},{n},{e},{mult:.8g},{conn:.8g}\n")
+        f.write("organism,n_nodes,n_edges,mean_degree,mean_excess_degree,multiplicity,connected_pairs\n")
+        for org, n, e, mean_k, excess_k, mult, conn in rows:
+            f.write(f"{org},{n},{e},{mean_k:.8g},{excess_k:.8g},{mult:.8g},{conn:.8g}\n")
     print("saved", OUT_CSV)
 
 

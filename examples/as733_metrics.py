@@ -79,15 +79,19 @@ def main():
         g = load_snapshot(os.path.join(EXTRACT_DIR, fn))
         date = date_of(fn)
         n, e = g.num_vertices(), g.num_edges()
+        mean_k, excess_k = L.get_degrees(g)  # mean degree, <k(k-1)>/<k>
         mult = L.average_shortest_path_multiplicity(g)
         conn = L.connected_pairs_fraction(g)
-        rows.append((date, n, e, mult, conn))
-        print(f"[{i}/{len(files)}] {date}: n={n} E={e} mult={mult:.4f} conn={conn:.4f}")
+        rows.append((date, n, e, mean_k, excess_k, mult, conn))
+        print(
+            f"[{i}/{len(files)}] {date}: n={n} E={e} <k>={mean_k:.2f} "
+            f"excess={excess_k:.2f} mult={mult:.4f} conn={conn:.4f}"
+        )
 
     with open(OUT_CSV, "w") as f:
-        f.write("date,n_nodes,n_edges,multiplicity,connected_pairs\n")
-        for date, n, e, mult, conn in rows:
-            f.write(f"{date},{n},{e},{mult:.8g},{conn:.8g}\n")
+        f.write("date,n_nodes,n_edges,mean_degree,mean_excess_degree,multiplicity,connected_pairs\n")
+        for date, n, e, mean_k, excess_k, mult, conn in rows:
+            f.write(f"{date},{n},{e},{mean_k:.8g},{excess_k:.8g},{mult:.8g},{conn:.8g}\n")
     print("saved", OUT_CSV)
 
 
