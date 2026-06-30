@@ -248,8 +248,8 @@ plt.rcParams.update({"font.size": 24})
 fig, ax = plt.subplots(2, 2)
 i = 0
 for model, fit, xscale, yscale, fit1, xscale1, yscale1, label in models:
-    ax[i][0].set_title("a)" if i == 0 else "b)", x=-0.1, y=1.05)
-    ax[i][1].set_title("c)" if i == 0 else "d)", x=-0.1, y=1.05)
+    ax[i][0].set_title("a)" if i == 0 else "c)", x=-0.1, y=1.05)
+    ax[i][1].set_title("b)" if i == 0 else "d)", x=-0.1, y=1.05)
     plot1(ax[i], model, fit, xscale, yscale, fit1, xscale1, yscale1, label)
     i += 1
 
@@ -288,9 +288,9 @@ fig, ax = plt.subplots(2, 2)
 
 for i in [0, 1]:
     ax[i][0].set_title(
-        r"a)" if i == 0 else r"b)", x=-0.1, y=1.05, horizontalalignment="left"
+        r"a)" if i == 0 else r"c)", x=-0.1, y=1.05, horizontalalignment="left"
     )
-    ax[i][1].set_title(r"c)" if i == 0 else r"d)", x=-0.1, y=1.05)
+    ax[i][1].set_title(r"b)" if i == 0 else r"d)", x=-0.1, y=1.05)
 
 for L in [1, 3]:
     plot2(ax[0], L, "log-quad", "log", "linear", "linear", "linear", "linear")
