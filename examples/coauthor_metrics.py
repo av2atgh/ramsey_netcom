@@ -1,10 +1,11 @@
-"""Metrics for the locally-built cumulative cond-mat co-authorship networks.
+"""Metrics for the locally-built cumulative arXiv co-authorship networks.
 
-Reads the per-year graphs produced by build_condmat_coauthor.py
-(examples/data/condmat_coauthor_upto_<year>.gt.gz) and computes, per yearly
-snapshot, the number of nodes, mean degree, mean excess degree (<k(k-1)>/<k>),
-average shortest-path multiplicity and the fraction of connected node pairs.
-One row per year -> examples/condmat_coauthor_metrics.csv.
+Reads the per-year graphs produced by build_coauthor.py for a chosen archive
+(ARXIV_CATEGORY, default "cond-mat") -- examples/data/<prefix>_coauthor_upto_
+<year>.gt.gz -- and computes, per yearly snapshot, the number of nodes, mean
+degree, mean excess degree (<k(k-1)>/<k>), average shortest-path multiplicity and
+the fraction of connected node pairs. One row per year ->
+examples/<prefix>_coauthor_metrics.csv.
 
 WARNING: average shortest-path multiplicity is O(n*(n+m)). These cumulative
 networks grow to hundreds of thousands of nodes, so the later years are
@@ -13,7 +14,7 @@ impractical to compute exactly. Cap the range with:
     ARXIV_MAX_NODES=<k>      skip any snapshot larger than k nodes
 
 Run from anywhere:
-    ARXIV_MAX_YEAR=2005 python examples/condmat_coauthor_metrics.py
+    ARXIV_CATEGORY=math ARXIV_MAX_YEAR=2005 python examples/coauthor_metrics.py
 """
 import glob
 import os
@@ -28,8 +29,10 @@ from ramsey_netcom import libs as L
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(HERE, "data")
-PATTERN = os.path.join(DATA_DIR, "condmat_coauthor_upto_*.gt.gz")
-OUT_CSV = os.path.join(HERE, "condmat_coauthor_metrics.csv")
+CATEGORY = os.environ.get("ARXIV_CATEGORY", "cond-mat")
+PREFIX = CATEGORY.replace("-", "").replace(".", "_")
+PATTERN = os.path.join(DATA_DIR, f"{PREFIX}_coauthor_upto_*.gt.gz")
+OUT_CSV = os.path.join(HERE, f"{PREFIX}_coauthor_metrics.csv")
 
 _YEAR_RE = re.compile(r"upto_(\d{4})\.gt\.gz$")
 

@@ -1,7 +1,8 @@
-"""Temporal metrics for the SNAP Autonomous Systems AS-733 dataset.
+r"""Temporal metrics for the SNAP Autonomous Systems AS-733 dataset.
 
-Downloads as-733.tar.gz from SNAP (once, cached under examples/data/), then for
-each daily snapshot (Nov 1997 - Jan 2000) computes:
+Data source: https://snap.stanford.edu/data/as-733.html
+The script downloads as-733.tar.gz directly from SNAP (once, cached under
+examples/data/), then for each daily snapshot (Nov 1997 - Jan 2000) computes:
     - number of nodes
     - average shortest-path multiplicity (mean over node pairs)
     - fraction of connected node pairs (mean over node pairs of multiplicity > 0)
@@ -11,6 +12,15 @@ Set AS733_LIMIT=<k> to process only the first k snapshots (quick test).
 
 Run from anywhere:
     python examples/as733_metrics.py
+
+Citation:
+    @misc{snapnets,
+      author       = {Jure Leskovec and Andrej Krevl},
+      title        = {{SNAP Datasets}: {Stanford} Large Network Dataset Collection},
+      howpublished = {\url{http://snap.stanford.edu/data}},
+      month        = jun,
+      year         = 2014
+    }
 """
 import os
 import re
@@ -26,6 +36,7 @@ from ramsey_netcom import libs as L
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(HERE, "data")
+# data source page: https://snap.stanford.edu/data/as-733.html
 URL = "https://snap.stanford.edu/data/as-733.tar.gz"
 TARBALL = os.path.join(DATA_DIR, "as-733.tar.gz")
 EXTRACT_DIR = os.path.join(DATA_DIR, "as-733")
