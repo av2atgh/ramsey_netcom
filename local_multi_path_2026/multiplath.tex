@@ -121,7 +121,7 @@ For the randomized networks generated with the local search model $LS(n, 1)^*$, 
 
 Next we focus on three models generating networks with the same expected degree distribution, with a tail exponent $\gamma=3$.  They are $BA(n,2)$ $DS(n, 1/3)^*$ and $BB(n, 1)^*$ (Appendix A). In this case, by Eq.~\eqref{mu1}, there is a logarithmic scaling with increasing the network size. The logarithmic scaling is confirmed by the numerical simulations (Fig. \ref{fig_randomized}b-d), albeit with small deviations from the mean-field slope $e^{-1}$.
 
-To tap into the regime with $\gamma<3$, we generated randomized networks using the duplication-split model $DS(n, 2/5)^*$. The expected degree distribution is a power law with tail exponent $\gamma= 5/2 =2.5$ (Appendix A, Eq. \eqref{gammaDS}, with $q=2/5$). In this case, by Eq.~\eqref{mu2}, we expect the power law scaling $\langle \mu\rangle \sim n^{1/5}$. The numerical simulations are consistent with the predicted power law scaling (Fig. \ref{fig_randomized}e).
+Tapping into the case $\gamma<3$, we generated randomized networks using the duplication-split model $DS(n, 2/5)^*$. The expected degree distribution is a power law with tail exponent $\gamma= 5/2 =2.5$ (Appendix A, Eq. \eqref{gammaDS}, with $q=2/5$). In this case, by Eq.~\eqref{mu2}, we expect the power law scaling $\langle \mu\rangle \sim n^{1/5}$. The numerical simulations are consistent with the predicted power law scaling (Fig. \ref{fig_randomized}e).
 
 Finally, all the data can be put together to challenge the mean field prediction that $\langle\mu\rangle\sim c_2/e$ (Appendix A, Eq. \eqref{muk}, where both $\langle\mu\rangle$ and $c_2$ are estimated numerically. The agreement with the mean-field result is not perfect, but overall the data for all models clusters near the mean-field line (Fig. \ref{fig_randomized}f).
 
@@ -158,7 +158,7 @@ Figure \ref{fig_local}c and d reports the data for the $DS(n, q=1/3)$ model: nod
 \label{mu_exp} 
 \end{equation}
 %
-where $a>0$ and $b>0$ (Fig. \ref{fig_local}c). $\langle\mu\rangle$ also exhibits an exponential scaling with $\langle\kappa\rangle$ (Fig. \ref{fig_local}d). Note the exponential growth is faster than the logarithmic scaling observed for the randomized  $DS(n, 1/3)^*$ networks (Fig. \ref{fig_randomized}b).
+where $a>0$ and $b>0$ (Fig. \ref{fig_local}c). There is also an exponential scaling of $\langle\mu\rangle$ vs $\langle\kappa\rangle$ (Fig. \ref{fig_local}d). The exponential growth is faster than the logarithmic scaling observed for the randomized  $DS(n, 1/3)^*$ networks (Fig. \ref{fig_randomized}b).
 
 \begin{figure}
 \includegraphics[width=3.4in]{fig3.pdf}
@@ -166,9 +166,9 @@ where $a>0$ and $b>0$ (Fig. \ref{fig_local}c). $\langle\mu\rangle$ also exhibits
 \label{fig_bubble}
 \end{figure}
 
-The differences between the local-search and duplication-split models could be related to the typical cycle length induced by the local rule. The triadic closure rule of $LS(n, 1)$ creates cycles of length 3. There is only one shortest path between the nodes in a 3-nodes cycle. In contrast, the duplication rule create cycles of length 4. Each node in a 4-cycle has two shortest paths to the opposite node two steps away. The duplication rule boosts the shortest path multiplicity. Note that this reasoning does not take into account the creation of multiple paths between existing nodes and passing through the new node, or between the new node and other existing nodes in the network. Such additional contribution is responsible for the type I scaling for the $LS(n, 1)$ networks.
+The differences between the local-search and duplication-split models may be related to the associated typical cycle length. Triadic closure rule in $LS(n, 1)$ creates cycles of length 3. There is only one shortest path between the nodes in a 3-nodes cycle. In contrast, the duplication rule creates cycles of length 4. Each node in a 4-cycle has two shortest paths to the opposite node two steps away. The duplication rule boosts the shortest path multiplicity. Note that this reasoning does not take into account the creation of multiple paths between existing nodes and the new node. Such additional contribution is responsible for the type I scaling for the $LS(n, 1)$ networks.
 
-The bubble model $BB(n, L)$ is a great tool to investigate the cycle length dependency. At each network update, a chain of $L$ nodes is connected to the ends of a randomly chosen link, thus forming a cycle of length $L+2$. For $L=2k-1$ with $k=1, 2,\ldots$ the bubble model generates cycles of odd length. Otherwise, for $L=2k$ with $k=1, 2,\ldots$  the cycles have even length. \change{ The bubble networks have an expected degree distribution with power tail exponent $\gamma =3$ for $L=1$ and $\gamma>3$ for $L>1$ (Appendix A, Eq. \eqref{gammaBB}). For the randomized networks we would expect at most $\langle\mu\rangle \sim \ln n$, as corroborated for $BB(n, 1)^*$ in Fig. \ref{fig_randomized}c. In contrast, for all $BB(n, L)$ without randomization, the scaling is log-quadratic (Fig. \ref{fig_bubble}). While $\langle\mu\rangle$ reaches higher values for $L$ even than odd (Fig. \ref{fig_bubble}), the  existence of even length cycles is not sufficient for the exponential scaling.}
+The bubble model $BB(n, L)$ is a great tool to investigate the cycle length dependency. At each network update, a chain of $L$ nodes is connected to the ends of a randomly chosen link, thus forming a cycle of length $L+2$. For $L=2k-1$ and $k=1, 2,\ldots$, the bubble model generates cycles of odd length. Otherwise, for $k=1, 2,\ldots$,  the cycles have even length. \change{ The bubble networks have an expected degree distribution with power tail exponent $\gamma =3$ for $L=1$ and $\gamma>3$ for $L>1$ (Appendix A, Eq. \eqref{gammaBB}). For the randomized networks we would expect at most $\langle\mu\rangle \sim \ln n$, as corroborated for $BB(n, 1)^*$ in Fig. \ref{fig_randomized}c. In contrast, without randomization, the scaling is log-quadratic (Fig. \ref{fig_bubble}). While $\langle\mu\rangle$ reaches higher values for $L$ even than odd (Fig. \ref{fig_bubble}), the  existence of even length cycles is not sufficient for the exponential scaling.}
 
 \vskip 0.2in
 
@@ -183,16 +183,36 @@ The bubble model $BB(n, L)$ is a great tool to investigate the cycle length depe
 
 Dorogovtsev, Goltsev and Mendes introduced a deterministic model for network growth with a recursive rule similar to the bubble model with $L=1$ \cite{dorogovtsev2002fractal}. The model is started at step $t=0$ with 3 connected nodes making a triangle. At each new step, new nodes are connected to both ends of every link in the current network. Given this deterministic recursion many properties can written down as a function of the step $t$ \cite{dorogovtsev2002fractal}. \change{This recursive rule can be extended to any value of $L$, obtaining the deterministic bubble model, here denoted by $BBD(n, L)$.  For $L=1$ the degree distribution is characterized by a power law tail with exponent $\gamma = 1 + \ln 3/ \ln 2 \approx 2.6$\cite{dorogovtsev2002fractal}. Random networks with such degree distribution should exhibit a power law scaling of $\langle\mu\rangle$ vs $n$ (see Eq.~\eqref{mu2}). Indeed, the randomized $BBD(n, L)^*$ networks exhibit that power law scaling (Fig. \ref{fig_deterministic}, circles).  Surprisingly, the numerical results for the deterministic $BBD(n, 1)^*$ networks are better fitted by a log-linear relation (Fig. \ref{fig_deterministic}, squares). The randomness plays a role in the observed deviations from the logarithmic scaling.}
 
+\begin{figure}
+\includegraphics[width=3.4in]{fig5.pdf}
+\caption{Scaling of $\langle \mu \rangle$ vs $n$ in real networks (circles), together with the MF expectation (squares). The lines highlight scaling trends, their nature indicated in the legends.}
+\label{fig_real}
+\end{figure}
+
+
+\section{Real networks}
+\label{real}
+
+To gain insights in the context of real networks, I have selected three systems with data at different stages of the network evolution. The Internet map at the Autonomous System (AS) level downloaded from \cite{snapnets}, where nodes are ASs and links are external connections between them. Protein interaction networks for different organisms \cite{stark2006biogrid}, excluding virus related networks and small networks with less than 1,000 proteins, where nodes are proteins and links are reported physical interactions between them. Finally, the co-authorship network of \verb|arxiv/cond-mat|, where nodes are authors and two authors are linked if the have co-authored a preprint \cite{cornell_arxiv_dataset}. The noise and non-stationarity of the data precludes any strong statements, but we can highlight some trends.
+
+Figure \ref{fig_real} reports the average shortest path multiplicity vs the network size. For the Internet AS networks, there is an apparent power law scaling between $\langle \mu \rangle$ and $n$ (Fig. \ref{fig_real}a, dashed line). The MF approximation, $c_2/e$, also exhibits an apparent power law scaling  (Fig. \ref{fig_real}a, dashed-dotted line), with $\langle \mu \rangle$ above the observed data. AS networks have a power law degree distribution $p_k\sim k^{-\gamma}$ with $\gamma\approx 2.1$ \cite{pastor-satorras01, internet_vazquez02}. The random networks with $\gamma<3$ also exhibit this power law scaling of $\langle \mu \rangle$ vs $n$ (Fig \ref{fig_randomized}e). However, the AS are not random, they have disassortative degree correlations \cite{pastor-satorras01, internet_vazquez02}, whereby the average degree of neighbor nodes decreases with increasing the node degree \cite{pastor-satorras01, internet_vazquez02} and the assortative coefficient $r$ is negative \cite{newman02a}. Such start like structure does not favors the formation of multiple shortest paths \cite{pastor-satorras01, internet_vazquez02}.
+
+For the protein interaction networks there is an apparent exponential scaling between $\langle \mu \rangle$ and $n$ (Fig. \ref{fig_real}b, dashed line), although the data is to noisy. The MF approximation, also exhibits an apparent exponential scaling  (Fig. \ref{fig_real}b, dashed-dotted line), but with $\langle \mu \rangle$ above the observed data. Note that these networks exhibit the highest $\langle \mu \rangle$ values among the networks analyzed. Going from $\langle \mu \rangle\sim 10$ for lower organism on the lower $n$ range, to $\langle \mu \rangle\approx 64$ for the human network (largest network). The high values of  $\langle \mu \rangle$ and the exponential trend matches the behavior of the duplication split model.
+
+For the co-authorship networks there is an apparent power law scaling between $\langle \mu \rangle$ and $n$ (Fig. \ref{fig_real}c, dashed line). The MF approximation, also exhibits an apparent power law scaling  (Fig. \ref{fig_real}c, dashed-dotted line), but with $\langle \mu \rangle$ below the observed data. There are clear non-stationary patterns reflected in multiple inflection points. More prominent, at the last data point, corresponding with year 2026, the data and the MF expectation have close values. The current cond-mat co-authorship network has a shortest path multiplicity close to the random expectation. We note co-authorship networks exhibit assortative degree correlations, whereby the average degree of neighbor nodes increases with increasing the node degree \cite{vazquez03local} and the assortative coefficient $r$ is positive \cite{newman02a}.
+
 \section{Conclusions}
 \label{conclusions}
 
-\change{In random networks with an arbitrary degree distribution the average shortest path multiplicity scales approximately linear with the average excess degree: $\langle\mu\rangle \sim \langle k(k-1)/\langle k\rangle e$. For random networks with a power law degree distribution $p_k\sim k^{-\gamma}$, that implies the logarithmic scaling $\langle\mu\rangle_{I} = a + b\ln n$ for $\gamma =3$ and the power law scaling $\langle\mu\rangle_{II} \sim a n^\alpha$ with $\alpha=-1+3/\gamma$ when $2<\gamma<3$. These predictions are partially supported by the numerical data. Some corrections to the mean-field calculations are needed.}
+\change{In random networks with an arbitrary degree distribution, the average shortest path multiplicity scales linear with the average excess degree, $\langle\mu\rangle \sim \langle k(k-1)/\langle k\rangle e$. When the degree distribution is a power law $p_k\sim k^{-\gamma}$, that implies the logarithmic scaling $\langle\mu\rangle_{I} = a + b\ln n$ for $\gamma =3$ and the power law scaling $\langle\mu\rangle_{II} \sim a n^\alpha$, $\alpha=-1+3/\gamma$, when $2<\gamma<3$. These predictions are partially supported by the numerical data. Some corrections to the mean-field calculations are needed.}
 
 In sparse networks generated by local evolution rules,  we observe two types of scaling of the average shortest path multiplicity $\langle\mu\rangle$ vs $n$. For most models there is a log-quadratic scaling $\langle\mu\rangle_{III}= a + b\ln n + c(\ln n)^2$. In contrast, for the duplication-split model, a faster exponential growth $\langle\mu\rangle_{IV} = a e^{bn}$ manifests.
 
 Since the local evolution rules induce (i) the formation of network communities and (ii) the average number of communities $\langle\kappa\rangle$ increases with increasing the network size, then we can investigate the scaling between $\langle\mu\rangle$ and $\langle\kappa\rangle$. It is linear for all models tested, except for the duplication-split model where an exponential dependency was observed.
 
 We could say local evolution rules and network communities are two sides of the same coin. With that view in mind, the statements that local evolution rules increase shortest path multiplicity and that network communities increase shortest path multiplicity  are equivalent. However, we should bear in mind that the local network evolution rules model the natural evolution of the systems they represent. In that regard, the local evolution rules are the driving mechanism and everything else follows.
+
+In real networks $\langle\mu\rangle$  increases with the network size, with different scalings depending on the system under consideration. Furthermore, although limited, the evidence points to a modulation by degree correlations. For networks with assortative degree correlations, the average shortest path multiplicity is below the MF approximation. In contrast, for networks with disassortative degree correlations, the average shortest path multiplicity is below the MF approximation. This remain to be addressed by analytical calculations.
 
 \change{
 
@@ -202,7 +222,7 @@ We could say local evolution rules and network communities are two sides of the 
 \subsection*{Degree distribution}
 \label{degree_dis}
 
-We calculate the degree distribution using the rate equation approach introduced in Ref. \cite{degree_dist_krapivsky00}. It is a mean-field approximation because the expectations following an increase in network size are calculated from the expectations before the change, neglecting the stochastic nature of the node addition. For the models considered here, the expected number of nodes with degree $k$ after $n$ nodes has been added, $n_k(n)$, satisfies the recursive equation
+We calculate the degree distribution using the rate equation approach \cite{degree_dist_krapivsky00}. It is a mean-field approximation because the expectation after an increase in network size is calculated from the expectations before the change, neglecting the stochastic nature of the node addition. For the models considered here, the expected number of nodes with degree $k$ after $n$ nodes has been added, $n_k(n)$, satisfies the recursive equation
 %
 \begin{eqnarray}
 n_k(n+1) &=& n_k(n) + \frac{a + b(k-1)}{n} n_{k-1} - \frac{a+bk}{n} n_k \nonumber\\
@@ -308,9 +328,7 @@ c_{2, \gamma=3} \sim \ln n.
 \subsection*{$\langle\mu\rangle$: Erd\H{o}s--R\'enyi graphs}
 \label{muER}
 
-\noindent Here we calculate the average shortest path multiplicity for  an Erd\H{o}s--R\'enyi graph with $n$ nodes and link probability $p$, building on previous calculations in Refs.~\cite{Fronczak2004, distance_stats_baronchelli_2006, Blondel2007, SoleRibalta2019}. Throughout, $c= np$ denotes the mean degree, $D=\ln n /\ln c$ the typical distance between two nodes and we assume $c>1$. We calculate the average shortest path multiplicity using a mean-field approach. The paths between two nodes are assumed independent and their existence determined by $p$ and $n$. We denote by $m_d$ the number of potential paths between two nodes at a distance $d$, $M_d$ the number of realized paths between two nodes at a distance $d$ and $F_d$ the probability that that no path shorter than $d$ exists.
-
-The expected number of shortest paths between two random vertices equals the expected number of length-$d$ paths $\langle M_d\rangle$ weighted by the probability $F_{d-1}$ that no shorter path exists,
+\noindent Here we calculate the average shortest path multiplicity for  an Erd\H{o}s--R\'enyi graph with $n$ nodes and link probability $p$, building on previous calculations in Refs.~\cite{Fronczak2004, distance_stats_baronchelli_2006, Blondel2007, SoleRibalta2019}. Throughout, $c= np$ denotes the mean degree, $D=\ln n /\ln c$ the typical distance between two nodes and we assume $c>1$. We calculate the average shortest path multiplicity using a mean-field approach. The paths between two nodes are assumed independent and their existence determined by $p$ and $n$. We denote by $m_d$ the number of potential paths between two nodes at a distance $d$, $M_d$ the number of realized paths between two nodes at a distance $d$ and $F_d$ the probability that that no path shorter than $d$ exists. The expected number of shortest paths between two vertices equals the expected number of length-$d$ paths $\langle M_d\rangle$, weighted by the probability that no shorter path exists,
 %
 \begin{equation}
 \langle\mu\rangle = \sum_{d}\langle M_d\rangle\,F_{d-1}.
@@ -331,7 +349,7 @@ for $d\ll n$. The distribution of the number of realized paths $M_d$ follows a b
 \label{Md}
 \end{equation}
 %
-In turn, the probability than non of these paths is present is $\Pr(M_d=0) =(1-p^d)^{m_d} \approx e^{ - \langle M_d\rangle }$, for $p\ll1$. Therefore,
+The probability that the paths are not present is $\Pr(M_d=0) =(1-p^d)^{m_d} \approx e^{ - \langle M_d\rangle }$, for $p\ll1$, and
 %
 \begin{equation}
 F_d = \prod_{k=1}^d \Pr(M_k=0) = e^{-\sum_{k=1}^{d}\langle M_k\rangle}.
@@ -347,7 +365,7 @@ F_d \approx  \exp\left( -c^{d-D} \right),
 %
 recapitulating Eq. 14 in Ref.~\cite{Fronczak2004} and Eq. 3 in Ref.~\cite{Blondel2007}.
 
-Substituting Eq.~\eqref{Md} and Eq.~\eqref{Fd}) into \eqref{mu_avg} we finally obtain
+Substituting Eq.~\eqref{Md} and Eq.~\eqref{Fd}) into \eqref{mu_avg} we obtain
 %
 \begin{equation}
 \langle\mu\rangle \approx \sum_{d}c^{\,d-D}\,\exp\left( -c^{\,d-D-1} \right).
@@ -412,7 +430,7 @@ The summand peaks sharply at $c_1 c_2^{d - D_2 -2} = 1$, obtaining
 \label{muk}
 \end{equation}
 %
-Note that for an Erd\H{o}s--R\'enyi graph, $c_2 = c_1 =c$ and we recover Eq.~\eqref{muER}.
+For an Erd\H{o}s--R\'enyi graph, $c_2 = c_1 =c$, recovering Eq.~\eqref{muER}.
 
 }
 

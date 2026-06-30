@@ -6,7 +6,7 @@
 %Control: page (0) single
 %Control: year (1) truncated
 %Control: production of eprint (0) enabled
-\begin{thebibliography}{27}%
+\begin{thebibliography}{33}%
 \makeatletter
 \providecommand \@ifxundefined [1]{%
  \@ifx{#1\undefined}
@@ -247,6 +247,62 @@
   {journal} {\bibinfo  {journal} {Phys. Rev. E}\ }\textbf {\bibinfo {volume}
   {65}},\ \bibinfo {pages} {066122} (\bibinfo {year} {2002})}\BibitemShut
   {NoStop}%
+\bibitem [{\citenamefont {Leskovec}\ and\ \citenamefont
+  {Krevl}(2014)}]{snapnets}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {J.}~\bibnamefont
+  {Leskovec}}\ and\ \bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Krevl}},\ }\href@noop {} {\enquote {\bibinfo {title} {{SNAP Datasets}:
+  {Stanford} large network dataset collection},}\ }\bibinfo {howpublished}
+  {\url{http://snap.stanford.edu/data}} (\bibinfo {year} {2014})\BibitemShut
+  {NoStop}%
+\bibitem [{\citenamefont {Stark}\ \emph {et~al.}(2006)\citenamefont {Stark},
+  \citenamefont {Breitkreutz}, \citenamefont {Reguly}, \citenamefont {Boucher},
+  \citenamefont {Breitkreutz},\ and\ \citenamefont {Tyers}}]{stark2006biogrid}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {C.}~\bibnamefont
+  {Stark}}, \bibinfo {author} {\bibfnamefont {B.-J.}\ \bibnamefont
+  {Breitkreutz}}, \bibinfo {author} {\bibfnamefont {T.}~\bibnamefont {Reguly}},
+  \bibinfo {author} {\bibfnamefont {L.}~\bibnamefont {Boucher}}, \bibinfo
+  {author} {\bibfnamefont {A.}~\bibnamefont {Breitkreutz}}, \ and\ \bibinfo
+  {author} {\bibfnamefont {M.}~\bibnamefont {Tyers}},\ }\href@noop {}
+  {\bibfield  {journal} {\bibinfo  {journal} {Nucleic acids research}\ }\textbf
+  {\bibinfo {volume} {34}},\ \bibinfo {pages} {D535} (\bibinfo {year}
+  {2006})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {University}(2020)}]{cornell_arxiv_dataset}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {C.}~\bibnamefont
+  {University}},\ }\href {\doibase 10.34740/KAGGLE/DS/2219} {\enquote {\bibinfo
+  {title} {arxiv dataset},}\ } (\bibinfo {year} {2020})\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Pastor-Satorras}\ \emph {et~al.}(2001)\citenamefont
+  {Pastor-Satorras}, \citenamefont {V\'azquez},\ and\ \citenamefont
+  {Vespignani}}]{pastor-satorras01}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {R.}~\bibnamefont
+  {Pastor-Satorras}}, \bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {V\'azquez}}, \ and\ \bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Vespignani}},\ }\href {\doibase 10.1103/PhysRevLett.87.258701} {\bibfield
+  {journal} {\bibinfo  {journal} {Phys. Rev. Lett.}\ }\textbf {\bibinfo
+  {volume} {87}},\ \bibinfo {pages} {258701} (\bibinfo {year}
+  {2001})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {V\'azquez}\ \emph {et~al.}(2002)\citenamefont
+  {V\'azquez}, \citenamefont {Pastor-Satorras},\ and\ \citenamefont
+  {Vespignani}}]{internet_vazquez02}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {V\'azquez}}, \bibinfo {author} {\bibfnamefont {R.}~\bibnamefont
+  {Pastor-Satorras}}, \ and\ \bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Vespignani}},\ }\href {\doibase 10.1103/PhysRevE.65.066130} {\bibfield
+  {journal} {\bibinfo  {journal} {Phys. Rev. E}\ }\textbf {\bibinfo {volume}
+  {65}},\ \bibinfo {pages} {066130} (\bibinfo {year} {2002})}\BibitemShut
+  {NoStop}%
+\bibitem [{\citenamefont {Newman}(2002)}]{newman02a}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {M.~E.~J.}\
+  \bibnamefont {Newman}},\ }\href {\doibase 10.1103/PhysRevLett.89.208701}
+  {\bibfield  {journal} {\bibinfo  {journal} {Phys. Rev. Lett.}\ }\textbf
+  {\bibinfo {volume} {89}},\ \bibinfo {pages} {208701} (\bibinfo {year}
+  {2002})}\BibitemShut {NoStop}%
 \bibitem [{\citenamefont {Krapivsky}\ \emph {et~al.}(2000)\citenamefont
   {Krapivsky}, \citenamefont {Redner},\ and\ \citenamefont
   {Leyvraz}}]{degree_dist_krapivsky00}%
