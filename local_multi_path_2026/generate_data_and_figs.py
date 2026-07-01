@@ -248,8 +248,8 @@ plt.rcParams.update({"font.size": 24})
 fig, ax = plt.subplots(2, 2)
 i = 0
 for model, fit, xscale, yscale, fit1, xscale1, yscale1, label in models:
-    ax[i][0].set_title("a)" if i == 0 else "b)", x=-0.1, y=1.05)
-    ax[i][1].set_title("c)" if i == 0 else "d)", x=-0.1, y=1.05)
+    ax[i][0].set_title("a)" if i == 0 else "c)", x=-0.1, y=1.05)
+    ax[i][1].set_title("b)" if i == 0 else "d)", x=-0.1, y=1.05)
     plot1(ax[i], model, fit, xscale, yscale, fit1, xscale1, yscale1, label)
     i += 1
 
@@ -288,9 +288,9 @@ fig, ax = plt.subplots(2, 2)
 
 for i in [0, 1]:
     ax[i][0].set_title(
-        r"a)" if i == 0 else r"b)", x=-0.1, y=1.05, horizontalalignment="left"
+        r"a)" if i == 0 else r"c)", x=-0.1, y=1.05, horizontalalignment="left"
     )
-    ax[i][1].set_title(r"c)" if i == 0 else r"d)", x=-0.1, y=1.05)
+    ax[i][1].set_title(r"b)" if i == 0 else r"d)", x=-0.1, y=1.05)
 
 for L in [1, 3]:
     plot2(ax[0], L, "log-quad", "log", "linear", "linear", "linear", "linear")
@@ -333,3 +333,64 @@ ax.legend(loc="upper left", frameon=0)
 plt.savefig(
     "fig4.pdf", bbox_inches="tight", facecolor="white", edgecolor="none", dpi=300
 )
+
+
+# figure 5
+
+plt.rcParams.update({"font.size": 16})
+
+fig, ax = plt.subplots(3,1)
+
+ax_ = ax[0]
+df = pd.read_csv('data/as733_metrics.csv')
+df['multiplicity1'] = df.multiplicity / df.connected_pairs
+df['multiplicity_rnd'] = df.mean_excess_degree/np.e
+ax_.scatter(df.n_nodes, df.multiplicity1, label='Data')
+ax_.scatter(df.n_nodes, df.multiplicity_rnd, label='MF')
+fit = 'log-log'
+x1, y1 = get_fit(df.n_nodes, df.multiplicity1, fit)
+ax_.plot(x1, y1, ls='--', label=fit)
+x1, y1 = get_fit(df.n_nodes, df.multiplicity_rnd, fit)
+ax_.plot(x1, y1, ls='-.', label=fit)
+ax_.set(xscale='log', yscale='log', xlabel=r'$n$', ylabel=r'$\langle\mu\rangle$')
+ax_.legend(loc='upper left', frameon=False)
+ax_.set_title(r'a) Internet Autonomous System (AS) level', x=-0.1, y=1.05, horizontalalignment='left')
+
+ax_ = ax[1]
+df = pd.read_csv('data/biogrid_interactome_metrics.csv')
+df = df.loc[(df.n_nodes > 999) & ~df.organism.str.contains('irus')].reset_index(drop=True)
+df['multiplicity1'] = df.multiplicity / df.connected_pairs
+df['multiplicity_rnd'] = df.mean_excess_degree/np.e
+ax_.scatter(df.n_nodes, df.multiplicity1, label='Data')
+ax_.scatter(df.n_nodes, df.multiplicity_rnd, label='MF')
+fit = 'exp'
+x1, y1 = get_fit(df.n_nodes, df.multiplicity1, fit)
+ax_.plot(x1, y1, ls='--', label=fit)
+x1, y1 = get_fit(df.n_nodes, df.multiplicity_rnd, fit)
+ax_.plot(x1, y1, ls='-.', label=fit)
+ax_.set(xscale='linear', yscale='log', xlabel=r'$n$', ylabel=r'$\langle\mu\rangle$')
+ax_.legend(loc='lower right', frameon=False)
+ax_.set_title(r'b) Protein Interaction Networks', x=-0.1, y=1.05, horizontalalignment='left')
+
+ax_ = ax[2]
+df = pd.read_csv('data/condmat_coauthor_metrics.csv')
+#df = df.iloc[1:].reset_index(drop=True)
+df['multiplicity1'] = df.multiplicity / df.connected_pairs
+df['multiplicity_rnd'] = df.mean_excess_degree/np.e
+ax_.scatter(df.n_nodes, df.multiplicity1, label='Data')
+ax_.scatter(df.n_nodes, df.multiplicity_rnd, label='MF')
+fit = 'log-log'
+x1, y1 = get_fit(df.n_nodes, df.multiplicity1, fit)
+ax_.plot(x1, y1, ls='--', label=fit)
+x1, y1 = get_fit(df.n_nodes, df.multiplicity_rnd, fit)
+ax_.plot(x1, y1, ls='-.', label=fit)
+ax_.set(xscale='log', yscale='log', xlabel=r'$n$', ylabel=r'$\langle\mu\rangle$')
+ax_.legend(loc='upper left', frameon=False)
+ax_.set_title(r'c) arxiv/cond-mat co-authorship', x=-0.1, y=1.05, horizontalalignment='left')
+
+plt.subplots_adjust(bottom=0,  hspace=0.35, top=3)
+
+plt.savefig(
+    "fig5.pdf", bbox_inches="tight", facecolor="white", edgecolor="none", dpi=300
+)
+
