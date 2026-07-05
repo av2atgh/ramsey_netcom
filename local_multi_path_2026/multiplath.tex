@@ -189,6 +189,74 @@ Dorogovtsev, Goltsev and Mendes introduced a deterministic model for network gro
 \label{fig_real}
 \end{figure}
 
+\change{
+\section{Diamond lattice}
+\label{diamond}
+
+The deterministic models above generate networks whose multiplicity can only be tracked numerically. To obtain a fully solvable reference, I turn to a deterministic construction that is a close relative of the bubble rule: the $(b,s)$ diamond hierarchical lattice~\cite{migdal1975phase, kadanoff1976notes}. Starting from a single bond between two poles $A$ and $B$ (generation $t=0$), every edge is replaced at each step by $b$ parallel paths of $s$ edges each. This is the deterministic, all-edges version of the bubble rule $BB(n, L)$, which instead attaches one bubble of length $L=s$ to a single randomly chosen link per step. The standard diamond corresponds to $b=s=2$: every edge becomes two parallel two-edge paths (Fig.~\ref{fig_diamond}). Generation $t$ has $n_t = \frac13(2\cdot4^{t}+4)$ nodes, so $n_t=2,4,12,44,\ldots$ for $t=0,1,2,3,\ldots$.
+
+\begin{figure}
+\includegraphics[width=3.4in]{diamond_lattice.pdf}
+\caption{Construction of the $b=s=2$ diamond hierarchical lattice for generations $t=0,1,2$. Starting from the single bond $A$--$B$ ($t=0$), each edge is replaced by two parallel paths of two edges (adding one hub per path). The poles $A,B$ are highlighted in red, the internal hubs in blue.}
+\label{fig_diamond}
+\end{figure}
+
+Because distinct copies of the previous generation meet only at corner vertices, the shortest path multiplicity is exactly renormalizable. Reading the construction backwards (deflation), $G_t$ is $b$ parallel branches, each $s$ copies of $G_{t-1}$ in series. Across a series of copies lengths add and multiplicities multiply, while across the $b$ parallel branches (all of equal length) the multiplicities add. Writing $D_t$ for the pole-to-pole distance and $P_t\equiv\mu_{AB}$ for the pole-to-pole multiplicity, this gives $D_t=s\,D_{t-1}=s^{t}$ and $P_t=b\,P_{t-1}^{\,s}$ with $P_0=1$. Taking $\log_b$ linearizes the recursion, $\log_b P_t = 1+s\log_b P_{t-1}$, and yields the closed form
+%
+\begin{equation}
+P_t = b^{\,(s^{t}-1)/(s-1)} \;\xrightarrow{\,b=s=2\,}\; 2^{\,2^{t}-1}.
+\label{eq:diamond_pole}
+\end{equation}
+%
+For the diamond this reads $P_t=2^{\,D_t-1}$ with $D_t=2^{t}$: the number of geodesics between the antipodal poles is \emph{doubly exponential} in the generation. Equation~\eqref{eq:diamond_pole} was verified against direct construction of the lattice for $(b,s)\in\{(2,2),(3,2),(2,3),(4,2),(3,3)\}$.
+
+The average over all node pairs is obtained from the same recursion. Every vertex lies on a pole-to-pole geodesic, $d(v,A)+d(v,B)=D_t$ (by induction on $t$: detours around the parallel branches are strictly longer), so a vertex is characterized by the single number $d(v,A)$. Splitting the pairs into those internal to one copy and those spanning two copies, the total geodesic count $S_t=\sum_{u<v}\mu_{uv}$ obeys $S_t=4S_{t-1}+\mathrm{Inter}_t$ for the diamond, where the inter-copy term is a corner-transit convolution of the two copies' pole-path counts, weighted by the factor $P_{t-1}$ of the shared corner traversal. Carrying out the recursion exactly (Table~\ref{tab:diamond}), the average multiplicity $\langle\mu\rangle_t=S_t/\binom{n_t}{2}$ follows the doubly-exponential law
+%
+\begin{equation}
+\langle\mu\rangle_t \;\sim\; \kappa\,\frac{2^{\,2^{t}}}{4^{t}} \;\approx\; 2.1\,\frac{P_t}{n_t},
+\qquad \kappa\to1.576 .
+\label{eq:diamond_avg}
+\end{equation}
+%
+That is, $\langle\mu\rangle_t=\Theta(P_t/n_t)$: the average tracks the pole multiplicity divided by the node count, up to an $O(1)$ prefactor $\kappa$ set by the fixed point of the corner-transit convolution. The sum is dominated by near-antipodal pairs, which inherit a geodesic count of order $P_{t-1}^{2}\sim P_t$, comparable to the pole value.
+
+Equation~\eqref{eq:diamond_avg} is expressed in the generation index $t$. The scaling with the network size $n$ follows by inverting the node count. For large $t$, $n_t=\frac13(2\cdot4^{t}+4)\simeq\frac23\,4^{t}$, so that $4^{t}\simeq\frac32 n$ and hence $2^{t}\simeq\sqrt{3n/2}$. Substituting $4^{t}$ and $2^{2^{t}}=2^{\sqrt{3n/2}}$ into Eq.~\eqref{eq:diamond_avg}, the average multiplicity grows with the network size as a \emph{stretched exponential},
+%
+\begin{equation}
+\langle\mu\rangle \;\approx\; a\,e^{\,b\sqrt{n}},
+\label{eq:diamond_n}
+\end{equation}
+%
+with
+%
+\begin{equation}
+b=\sqrt{\tfrac32}\,\ln 2\approx0.849,
+\qquad
+a=\frac{2\kappa}{3}\approx1.05 .
+\label{eq:diamond_ab}
+\end{equation}
+%
+The rate $b$ is exact and $a$ is the amplitude of the leading term, $\ln\langle\mu\rangle\simeq b\sqrt{n}+\ln a$, the algebraic factor $1/n$ being subleading with respect to $\sqrt{n}$. Retaining it, the reduced form $\langle\mu\rangle\simeq a\,e^{\,b\sqrt{n}}/n$ reproduces the tabulated values to better than $1\%$ from $t=4$ on.
+
+\begin{table}[t]
+\caption{Exact node count $n_t$, pole distance $D_t=2^{t}$, pole multiplicity $P_t=2^{\,2^{t}-1}$, and average multiplicity $\langle\mu\rangle_t=S_t/\binom{n_t}{2}$ for the diamond ($b=s=2$), from the recursion and checked against direct construction. The last column shows the convergence of the prefactor $\kappa=\langle\mu\rangle_t\,4^{t}/2^{2^{t}}$ in Eq.~\eqref{eq:diamond_avg}.}
+\label{tab:diamond}
+\begin{ruledtabular}
+\begin{tabular}{lrrrl}
+$t$ & $n_t$ & $D_t$ & $P_t$ & $\langle\mu\rangle_t$ \quad ($\kappa$) \\
+\colrule
+1 & 4     & 2  & $2$              & $1.333$ \ \ (1.333) \\
+2 & 12    & 4  & $8$              & $1.939$ \ \ (1.939) \\
+3 & 44    & 8  & $128$            & $7.307$ \ \ (1.827) \\
+4 & 172   & 16 & $32\,768$        & $418.1$ \ \ (1.633) \\
+5 & 684   & 32 & $2.15\times10^{9}$  & $6.66\times10^{6}$ \ (1.589) \\
+6 & 2732  & 64 & $9.22\times10^{18}$ & $7.11\times10^{15}$ (1.579) \\
+\end{tabular}
+\end{ruledtabular}
+\end{table}
+
+The diamond lattice thus realizes the fastest growth of $\langle\mu\rangle$ found in this work: doubly exponential in the generation, i.e.\ $\langle\mu\rangle_t\sim P_t/n_t$ with $P_t=2^{2^t-1}$, which in terms of the network size is the stretched exponential $\ln\langle\mu\rangle\sim\sqrt{n}$ of Eq.~\eqref{eq:diamond_n}. Its origin is the same $b$-fold parallel branching that sets the seam multiplicity of the local models. A geodesic threads $(s^{t}-1)/(s-1)$ successive scales and at each scale independently selects one of the $b$ parallel branches; the branch choices multiply, reproducing $P_t=b^{(s^{t}-1)/(s-1)}$. Deterministic, maximally symmetric parallel branching therefore places a hard ceiling on how fast the shortest path multiplicity can grow, with the stochastic local rules of the previous sections falling below it.
+}
 
 \section{Real networks}
 \label{real}
