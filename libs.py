@@ -325,6 +325,42 @@ def generator_bubbles_deterministic(n_generations, params, seed):
     return [list(G.neighbors(i)) for i in G.nodes]
 
 
+def generator_connected_caveman(n, params, seed):
+    """Connected caveman graph: n // k cliques of size k joined into a ring."""
+    k = params["k"]
+    l = max(1, n // k)
+    G = nx.connected_caveman_graph(l, k)
+    return [list(G.neighbors(i)) for i in G.nodes]
+
+
+def generator_growing_caveman(n, params, seed):
+    """Growing caveman network.
+
+    Start with two nodes joined by an edge.  At each step select an existing
+    edge at random, add k - 2 new nodes and complete them together with the two
+    endpoints of the selected edge into a k-clique (k >= 3).  Each step adds
+    l = k - 2 nodes, so the reachable sizes are n = 2 + s (k - 2).  Growth stops
+    at the largest such size not exceeding n.
+    """
+    k = params["k"]
+    np.random.seed(seed=seed)
+    neighbours = [[1], [0]]          # two nodes joined by an edge
+    edges = [(0, 1)]
+    while len(neighbours) + (k - 2) <= n:
+        u, v = edges[np.random.randint(len(edges))]
+        new_nodes = list(range(len(neighbours), len(neighbours) + (k - 2)))
+        neighbours.extend([] for _ in new_nodes)
+        clique = [u, v] + new_nodes
+        for i in range(len(clique)):
+            for j in range(i + 1, len(clique)):
+                a, b = clique[i], clique[j]
+                if b not in neighbours[a]:      # (u, v) already present
+                    neighbours[a].append(b)
+                    neighbours[b].append(a)
+                    edges.append((a, b))
+    return neighbours
+
+
 def watts_strogatz(n, params, seed):
     """An extension of the Watts-Strogatz model.
     Input
@@ -666,6 +702,10 @@ def generator(n, params, seed):
         neighbours = generator_regular(n, params, seed)
     elif params["model-"] == "dgm":
         neighbours = generator_dorogovtsev_goltsev_mendes(n, params, seed)
+    elif params["model-"] == "cave":
+        neighbours = generator_connected_caveman(n, params, seed)
+    elif params["model-"] == "gcave":
+        neighbours = generator_growing_caveman(n, params, seed)
     return neighbours
 
 
@@ -823,6 +863,41 @@ def ramsey_community_number(
         f"binary search: [{n_left}, {n_right}], r_c: {n}, fraction with communities: {nr_c/nr}"
     )
     return n
+
+
+def ramsey_community_number_growing(
+    params,
+    epsilon,
+    nr,
+    l,
+    n0=2,
+    kappa=2,
+    method="blocks",
+    rewire=0,
+    line_graph=False,
+    max_steps=10000,
+    verbose=True,
+):
+    """Ramsey community number for a network grown l nodes at a time.
+
+    For models that grow in effective steps of l nodes (l = k - 2 for the
+    growing caveman, which adds a k-clique on a selected edge per step), the
+    reachable sizes are n = n0, n0 + l, n0 + 2l, ...  This scans those sizes
+    upward and returns the smallest n at which a fraction >= (1 - epsilon) of
+    the nr random instances has >= kappa communities.  Unlike the binary search
+    in ``ramsey_community_number`` it makes no monotonicity assumption and only
+    ever evaluates achievable sizes.
+    """
+    nr_target = (1 - epsilon) * nr
+    n = n0
+    for _ in range(max_steps):
+        nr_c = count_wc(n, params, nr, method, rewire, kappa, line_graph)
+        if verbose:
+            print(f"n={n}: fraction with >= {kappa} communities = {nr_c / nr:.3f}")
+        if nr_c >= nr_target:
+            return n
+        n += l
+    return None
 
 
 def draw_instance(n, params, seed, path, rewire=0, extension="pdf"):

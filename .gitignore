@@ -20,3 +20,7 @@ examples/*.png
 examples/*.csv
 examples/data/
 *_multiplicity*.png
+
+# sqrt/ manuscript, figures and cover letter (not tracked for now)
+sqrt/*.tex
+sqrt/*.pdf

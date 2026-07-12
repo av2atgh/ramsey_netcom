@@ -1,0 +1,237 @@
+\documentclass[aps,pre,onecolumn,superscriptaddress,floatfix]{revtex4-2}
+
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{bm}
+\usepackage[colorlinks=true,allcolors=blue]{hyperref}
+
+\newcommand{\Nof}{n_t}
+
+\begin{document}
+
+\title{Supplementary note: shortest-path multiplicity on the diamond
+hierarchical lattice}
+
+\author{Alexei Vazquez}
+\affiliation{Nodes \& Links Ltd, Cambridge, United Kingdom}
+\date{\today}
+
+\begin{abstract}
+A short, self-contained derivation of the number of shortest paths (geodesics)
+on the $(b,s)$ diamond hierarchical lattice, using only the recursive
+construction. The count between the two poles is obtained in closed form,
+$P_t=b^{(s^t-1)/(s-1)}$ (i.e.\ $2^{\,2^t-1}$ for the diamond), and the average
+over all vertex pairs is shown to grow doubly exponentially,
+$\bar\sigma_t\sim\kappa\,2^{\,2^t}/4^{t}\approx 2.1\,P_t/n_t$ with
+$\kappa\approx1.576$. All formulas are verified against direct construction of
+the lattice (\texttt{multiplicity.py}). This note is for internal inspection; it
+is not yet part of the manuscript.
+\end{abstract}
+
+\maketitle
+
+\section{Setup: the deflation recursion}
+\label{sec:setup}
+
+We use the same $(b,s)$ diamond hierarchical lattice as the main text, grown
+from a single bond between the poles $A,B$ by replacing every edge with $b$
+parallel paths of $s$ edges. It is convenient here to read the construction
+\emph{backwards} (deflation): $G_t$ consists of $b$ parallel branches between
+$A$ and $B$, and each branch is $s$ copies of $G_{t-1}$ placed in series and
+joined at new hub vertices. For the standard diamond $b=s=2$ this is
+particularly simple: $G_t$ is two branches, each two copies of $G_{t-1}$ joined
+at a middle hub, so $G_t$ is four copies of $G_{t-1}$ glued on the corner
+$4$-cycle $A\text{--}M_1\text{--}B\text{--}M_2$, where $M_1,M_2$ are the two
+generation-$1$ hubs and each side of the cycle is one copy $G_{t-1}$ with its
+poles at the two adjacent corners.
+
+Because distinct copies meet only at these corner vertices, any path leaving a
+copy must exit through one of its two corner poles. Two consequences are used
+repeatedly:
+\begin{itemize}
+\item[(i)] \emph{Copies are isometric subgraphs.} Leaving a copy and returning
+costs at least a full renormalized bond, so for two vertices of the same copy
+the graph distance equals the in-copy distance, and every geodesic between them
+stays inside the copy.
+\item[(ii)] \emph{Corner-transit.} A geodesic between vertices of \emph{different}
+copies is forced to pass through corner vertices, so it factorizes into an
+in-copy piece, a corner-to-corner piece on the $4$-cycle, and a second in-copy
+piece.
+\end{itemize}
+
+Throughout, $\sigma(u,v)$ denotes the number of shortest paths between $u$ and
+$v$, $d(u,v)$ their distance, $D_t$ the pole-to-pole distance, and $P_t\equiv
+\sigma(A,B)$.
+
+\section{Extremal multiplicity: the two poles}
+\label{sec:pole}
+
+Across one series copy, lengths add and geodesic counts multiply; across the $b$
+parallel branches (all of the same length) counts add. Hence
+\begin{equation}
+  D_t = s\,D_{t-1}=s^{t}, \qquad
+  P_t = b\,P_{t-1}^{\,s}, \qquad P_0=1 .
+  \label{eq:Prec}
+\end{equation}
+Taking $\log_b$ of the recursion gives $L_t\equiv\log_b P_t = 1+s\,L_{t-1}$ with
+$L_0=0$, so $L_t=(s^{t}-1)/(s-1)$ and
+\begin{equation}
+  \boxed{\;P_t = b^{\,(s^{t}-1)/(s-1)}\;}
+  \qquad\Longrightarrow\qquad
+  P_t = 2^{\,2^{t}-1}\ \ (b=s=2).
+  \label{eq:Pclosed}
+\end{equation}
+For the diamond this also reads $P_t = 2^{\,D_t-1}$ with $D_t=2^{t}$: the number
+of geodesics between the antipodal poles is \emph{doubly exponential} in the
+generation. Table~\ref{tab:pole} lists the exact values; Eq.~\eqref{eq:Pclosed}
+was checked against direct construction for
+$(b,s)\in\{(2,2),(3,2),(2,3),(4,2),(3,3)\}$.
+
+\begin{table}[t]
+  \caption{Pole-to-pole distance $D_t=2^{t}$ and geodesic multiplicity
+  $P_t=2^{\,2^{t}-1}$ for the diamond ($b=s=2$), verified against direct
+  construction.}
+  \label{tab:pole}
+  \begin{ruledtabular}
+  \begin{tabular}{lrr}
+    $t$ & $D_t=2^{t}$ & $P_t=2^{\,2^{t}-1}$ \\
+    \colrule
+    1 & 2   & $2$ \\
+    2 & 4   & $8$ \\
+    3 & 8   & $128$ \\
+    4 & 16  & $32\,768$ \\
+    5 & 32  & $2\,147\,483\,648$ \\
+    6 & 64  & $9\,223\,372\,036\,854\,775\,808$ \\
+    7 & 128 & $\approx 1.70\times10^{38}$ \\
+  \end{tabular}
+  \end{ruledtabular}
+\end{table}
+
+\section{An additivity lemma}
+\label{sec:lemma}
+
+\begin{quote}
+\emph{Lemma.} Every vertex lies on a pole-to-pole geodesic:
+$d(v,A)+d(v,B)=D_t$ for all $v\in G_t$.
+\end{quote}
+
+\noindent\emph{Proof (induction on $t$).} True for $G_0$ (a single edge).
+Assume it for $G_{t-1}$. A vertex $v$ lies in some copy, say the copy between
+corners $X$ and $Y$; by the inductive hypothesis
+$d(v,X)+d(v,Y)=D_{t-1}=s^{\,t-1}$. One of $X,Y$ is the near pole side and the
+other leads on to the far pole through $s-1$ further copies in series, each of
+length $D_{t-1}$; since detours around the parallel branches are strictly
+longer, the distance to the far pole is the in-copy distance to the appropriate
+corner plus $(s-1)D_{t-1}$. Adding the two pole distances gives
+$s\,D_{t-1}=s^{t}=D_t$. $\square$
+
+Two corollaries are used below. First, the distance profile of a vertex is fixed
+by a single number $\alpha(v)\equiv d(v,A)$, since $d(v,B)=D_t-\alpha(v)$.
+Second, adjacent corners of the $4$-cycle are at distance $D_{t-1}$ with
+$P_{t-1}$ geodesics between them, while opposite corners ($A$--$B$ and
+$M_1$--$M_2$) are at distance $D_t$ with $P_t$ geodesics; that is, the corner
+$4$-cycle is a renormalized copy of $G_1$ with each edge carrying length
+$D_{t-1}$ and multiplicity $P_{t-1}$.
+
+\section{Average over all pairs}
+\label{sec:avg}
+
+Let $S_t=\sum_{u<v}\sigma(u,v)$ be the total geodesic count and
+$\bar\sigma_t=S_t/\binom{n_t}{2}$ the average multiplicity, with
+$n_t=\tfrac13(2\cdot4^{t}+4)$ and $n_t=4n_{t-1}-4$. The deflation splits pairs
+into those inside a single copy and those spanning two copies:
+\begin{equation}
+  S_t = 4\,S_{t-1} + \mathrm{Inter}_t .
+  \label{eq:Srec}
+\end{equation}
+Intra-copy pairs contribute $4S_{t-1}$ because copies are isometric
+[\S\ref{sec:setup}(i)] and each intra-copy pair, including each adjacent-corner
+pair, belongs to exactly one copy.
+
+The inter-copy term is a corner-transit convolution
+[\S\ref{sec:setup}(ii)]. Parameterize $u$ by $p\equiv$ its distance to a
+reference corner of its copy, with $a_u,b_u$ the numbers of shortest paths from
+$u$ to the two corners; likewise $r,a_v,b_v$ for $v$. For $u,v$ in
+\emph{opposite} copies (e.g.\ the $A$--$M_1$ and $B$--$M_2$ copies), evaluating
+the four corner routes with the lemma gives the compact result
+\begin{equation}
+  d(u,v)=2^{t}-|p-r|,
+  \label{eq:duv}
+\end{equation}
+\begin{equation}
+  \sigma(u,v)=P_{t-1}\Big[\,a_u b_v\,\mathbf 1_{p>r}
+     + b_u a_v\,\mathbf 1_{p<r}
+     + (a_u b_v+b_u a_v)\,\mathbf 1_{p=r}\,\Big].
+  \label{eq:sigconv}
+\end{equation}
+The factor $P_{t-1}$ is the corner-to-corner traversal; the bracket convolves
+the two copies' pole-path counts, selected by which exit corner is shortest.
+Adjacent copies (sharing one corner) give an analogous, slightly longer, case
+list. Equations~\eqref{eq:duv}--\eqref{eq:sigconv} make explicit why the sum is
+dominated by \emph{near-antipodal} pairs (small $|p-r|$): those inherit a
+geodesic count of order $P_{t-1}^{2}\sim P_t$, comparable to the pole value.
+
+Carrying out~\eqref{eq:Srec} exactly yields Table~\ref{tab:avg}. Numerically the
+average obeys the doubly-exponential law
+\begin{equation}
+  \bar\sigma_t \;\sim\; \kappa\,\frac{2^{\,2^{t}}}{4^{t}}
+  \;\approx\; 2.1\,\frac{P_t}{n_t},
+  \qquad \kappa\to 1.576,
+  \label{eq:avgasymp}
+\end{equation}
+i.e.\ $\bar\sigma_t=\Theta(P_t/n_t)$: the average tracks the \emph{pole}
+multiplicity divided by the vertex count, up to an $O(1)$ prefactor $\kappa$.
+The prefactor is the fixed point of the corner-transit convolution and is not
+elementary; Eq.~\eqref{eq:avgasymp} with $\kappa\approx1.576$ is the honest
+closed characterization. (The two forms are equivalent since $2^{2^{t}}=2P_t$
+and $n_t\to\tfrac23 4^{t}$.)
+
+\begin{table}[t]
+  \caption{Total geodesic count $S_t=\sum_{u<v}\sigma(u,v)$ and average
+  multiplicity $\bar\sigma_t=S_t/\binom{n_t}{2}$ for the diamond, from the
+  recursion~\eqref{eq:Srec}, checked against direct construction. The last two
+  columns show the convergence of Eq.~\eqref{eq:avgasymp}:
+  $\kappa=\bar\sigma_t\,4^{t}/2^{2^{t}}$ and $\bar\sigma_t\,n_t/P_t$.}
+  \label{tab:avg}
+  \begin{ruledtabular}
+  \begin{tabular}{lrrrrr}
+    $t$ & $n_t$ & $S_t$ & $\bar\sigma_t$ & $\kappa$ & $\bar\sigma_t\,n_t/P_t$\\
+    \colrule
+    1 & 4     & $8$                              & $1.333$              & $1.333$ & $2.667$\\
+    2 & 12    & $128$                            & $1.939$              & $1.939$ & $2.909$\\
+    3 & 44    & $6\,912$                         & $7.307$              & $1.827$ & $2.512$\\
+    4 & 172   & $6\,148\,096$                    & $418.1$              & $1.633$ & $2.194$\\
+    5 & 684   & $1.556\times10^{12}$             & $6.663\times10^{6}$  & $1.589$ & $2.122$\\
+    6 & 2732  & $2.652\times10^{22}$             & $7.110\times10^{15}$ & $1.579$ & $2.106$\\
+    7 & 10924 & ---                              & $3.274\times10^{34}$ & $1.576$ & $2.102$\\
+  \end{tabular}
+  \end{ruledtabular}
+\end{table}
+
+\section{Remark: the seam eigenvalue again}
+\label{sec:remark}
+
+The whole effect is another face of the seam eigenvalue $b$ of the main text. A
+geodesic threads $\sim\log_s(\text{distance})$ successive scales, and at each
+scale it independently chooses one of the $b$ parallel branches; the branch
+choices multiply, giving $b^{\#\text{scales}}$ alternatives. Along a full
+pole-to-pole geodesic the number of scales is $(s^{t}-1)/(s-1)$, reproducing
+$P_t=b^{(s^{t}-1)/(s-1)}$ of Eq.~\eqref{eq:Pclosed}. The same branch-choice
+degeneracy, thinned by how close a generic pair is to antipodal, produces the
+average~\eqref{eq:avgasymp}. In the language of the RG map $M$, the exponential
+growth of the interface $e_{12}=b^{t}$ (the seam eigenvalue) and the exponential
+growth of the geodesic count share the same origin: the $b$-fold parallel
+branching of the cell.
+
+\section{Reproducibility}
+\label{sec:repro}
+
+All numbers above are produced by \texttt{multiplicity.py}, which builds $G_t$
+by edge replacement and computes shortest-path counts by breadth-first search
+with exact (arbitrary-precision) integer accumulation of $\sigma$. It prints
+Table~\ref{tab:pole} (pole distance and multiplicity, and the general-$(b,s)$
+check) and Table~\ref{tab:avg} (total and average multiplicity, with the
+asymptotic ratios).
+
+\end{document}
