@@ -310,10 +310,8 @@ plt.rcParams.update({"font.size": 12})
 
 fig, ax = plt.subplots()
 
-df = pd.read_csv(f"{DATAPATH}/model-bb_deterministic_vs_n_log.csv")
-df = pd.read_csv(
-    "/Users/avazquez/submissions/communities.2024/data_x/model-bbd_nr1_vs_n.csv"
-)
+df = pd.read_csv(f"{DATAPATH}/model-bbd_nr1_vs_n.csv")
+# the csv stores the generation index t; convert it to the node count
 df["n"] = 3 * (3**df.n + 1) // 2
 
 ax.scatter(df.n, df.multipath_rnd, label=r"$BBD(n, 1)^*$")
@@ -352,7 +350,7 @@ x1, y1 = get_fit(df.n_nodes, df.multiplicity1, fit)
 ax_.plot(x1, y1, ls='--', label=fit)
 x1, y1 = get_fit(df.n_nodes, df.multiplicity_rnd, fit)
 ax_.plot(x1, y1, ls='-.', label=fit)
-ax_.set(xscale='log', yscale='log', xlabel=r'$n$', ylabel=r'$\langle\mu\rangle$')
+ax_.set(xscale='log', yscale='log', xlabel=r'$n$', ylabel=r'$\langle\mu\rangle_c$')
 ax_.legend(loc='upper left', frameon=False)
 ax_.set_title(r'a) Internet Autonomous System (AS) level', x=-0.1, y=1.05, horizontalalignment='left')
 
@@ -368,7 +366,7 @@ x1, y1 = get_fit(df.n_nodes, df.multiplicity1, fit)
 ax_.plot(x1, y1, ls='--', label=fit)
 x1, y1 = get_fit(df.n_nodes, df.multiplicity_rnd, fit)
 ax_.plot(x1, y1, ls='-.', label=fit)
-ax_.set(xscale='linear', yscale='log', xlabel=r'$n$', ylabel=r'$\langle\mu\rangle$')
+ax_.set(xscale='linear', yscale='log', xlabel=r'$n$', ylabel=r'$\langle\mu\rangle_c$')
 ax_.legend(loc='lower right', frameon=False)
 ax_.set_title(r'b) Protein Interaction Networks', x=-0.1, y=1.05, horizontalalignment='left')
 
@@ -384,7 +382,7 @@ x1, y1 = get_fit(df.n_nodes, df.multiplicity1, fit)
 ax_.plot(x1, y1, ls='--', label=fit)
 x1, y1 = get_fit(df.n_nodes, df.multiplicity_rnd, fit)
 ax_.plot(x1, y1, ls='-.', label=fit)
-ax_.set(xscale='log', yscale='log', xlabel=r'$n$', ylabel=r'$\langle\mu\rangle$')
+ax_.set(xscale='log', yscale='log', xlabel=r'$n$', ylabel=r'$\langle\mu\rangle_c$')
 ax_.legend(loc='upper left', frameon=False)
 ax_.set_title(r'c) arxiv/cond-mat co-authorship', x=-0.1, y=1.05, horizontalalignment='left')
 
