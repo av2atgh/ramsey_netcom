@@ -24,3 +24,27 @@ examples/data/
 # sqrt/ manuscript, figures and cover letter (not tracked for now)
 sqrt/*.tex
 sqrt/*.pdf
+
+# LaTeX build artefacts
+# NOTE: *.pdf, *.bbl and *.bib are deliberately NOT ignored -- the figure PDFs,
+# multiplath.bbl (\input by the manuscript) and network.bib are tracked sources.
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.blg
+*.bcf
+*.run.xml
+*.nav
+*.snm
+*.vrb
+*Notes.bib
+!sqrt/run.log
+
+# compiled manuscripts
+local_multi_path_2026/multiplath.pdf
