@@ -7,8 +7,8 @@ Each manuscript has its own directory, holding its source, its measured data and
 the script that turns one into the other.
 
 `local_multi_path_2026/` -- "Local network evolution rules drive shortest path
-multiplicity". `generate_data_and_figs.py` reproduces Figs. 1-5 and
-`diamond_lattice_fig.py` reproduces Fig. 6.
+multiplicity". `generate_data_and_figs.py` reproduces Figs. 1-4 and 6, and
+`diamond_lattice_fig.py` reproduces Fig. 5.
 
 `sqrt/` -- community scaling analysis; see the Makefile in that directory.
 
@@ -22,14 +22,14 @@ the clone must be on the import path, and the clone itself must keep the name
 cd local_multi_path_2026
 PYTHONPATH=../.. python3 generate_data_and_figs.py
 
-By default this replots Figs. 1-5 from the cached measurements in `data/`, which
-takes seconds. The measurements themselves are produced by setting
+By default this replots Figs. 1-4 and 6 from the cached measurements in `data/`,
+which takes seconds. The measurements themselves are produced by setting
 `GENERATE_DATA = True` at the top of the script; that path re-runs the network
 generation and the community inference from scratch and takes days, because each
 point is an average over 100 realizations. The cached CSVs are committed so that
 the figures can be checked without paying that cost.
 
-The real-network panels of Fig. 5 read `data/as733_metrics.csv`,
+The real-network panels of Fig. 6 read `data/as733_metrics.csv`,
 `data/biogrid_interactome_metrics.csv` and `data/condmat_coauthor_metrics.csv`,
 derived from the sources cited in the manuscript.
 

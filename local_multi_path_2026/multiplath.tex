@@ -33,7 +33,7 @@ In this work I investigate this hypothesis by means of numerical simulations. In
 \section{Methods}
 \label{methods}
 
-The computer code related to these methods is available at \href{https://github.com/av2atgh/ramsey_netcom/tree/master/local_multi_path_2026}{github.com/av2atgh/ramsey\_netcom}, in the directory \verb|local_multi_path_2026|. That directory contains the measured data and the script \verb|generate_data_and_figs.py|, which reproduces Figs.~\ref{fig_randomized}--\ref{fig_real} from it.
+The computer code related to these methods is available at \href{https://github.com/av2atgh/ramsey_netcom/tree/master/local_multi_path_2026}{github.com/av2atgh/ramsey\_netcom}, in the directory \verb|local_multi_path_2026|. That directory contains the measured data together with the scripts that reproduce the figures from it: \verb|generate_data_and_figs.py| for Figs.~\ref{fig_randomized}--\ref{fig_deterministic} and \ref{fig_real}, and \verb|diamond_lattice_fig.py| for Fig.~\ref{fig_diamond}.
 
 \subsection{Local models}
 
@@ -193,12 +193,6 @@ The bubble model $BB(n, L)$ is a great tool to investigate the cycle length depe
 
 Dorogovtsev, Goltsev and Mendes introduced a deterministic model for network growth with a recursive rule similar to the bubble model with $L=1$ \cite{dorogovtsev2002fractal}. The model is started at step $t=0$ with 3 connected nodes making a triangle. At each new step, new nodes are connected to both ends of every link in the current network. Given this deterministic recursion many properties can written down as a function of the step $t$ \cite{dorogovtsev2002fractal}. This recursive rule can be extended to any value of $L$, obtaining the deterministic bubble model, here denoted by $BBD(n, L)$.  For $L=1$ the degree distribution is characterized by a power law tail with exponent $\gamma = 1 + \ln 3/ \ln 2 \approx 2.6$\cite{dorogovtsev2002fractal}. Random networks with such degree distribution should exhibit a power law scaling of $\langle\mu\rangle$ vs $n$ (see Eq.~\eqref{mu2}). Indeed, the randomized $BBD(n, L)^*$ networks exhibit that power law scaling (Fig. \ref{fig_deterministic}, circles).  Surprisingly, the numerical results for the deterministic $BBD(n, 1)$ networks are better fitted by a log-linear relation (Fig. \ref{fig_deterministic}, squares). The randomness plays a role in the observed deviations from the logarithmic scaling.
 
-\begin{figure}
-\includegraphics[width=3.05in]{fig5.pdf}
-\caption{Scaling of $\langle \mu \rangle_c$ vs $n$ in real networks (Data), together with the mean-field expectation $c_2/e$, Eq.~\eqref{muMF}, evaluated on the measured degree distribution with no fitted parameter (MF). a) Internet at the Autonomous System level, 733 daily snapshots; b) protein interaction networks of 12 organisms with more than 1000 proteins; c) the arxiv/cond-mat co-authorship network accumulated year by year. Each point is a single empirical network, and $\langle\mu\rangle_c=\langle\mu\rangle/\psi$ is the average restricted to connected pairs. The lines are fits over the full range, a power law in a and c and an exponential in b.}
-\label{fig_real}
-\end{figure}
-
 
 \section{Diamond lattice}
 \label{diamond}
@@ -270,6 +264,12 @@ The diamond lattice thus realizes the fastest growth of $\langle\mu\rangle$ foun
 
 \section{Real networks}
 \label{real}
+
+\begin{figure}
+\includegraphics[width=3.05in]{fig5.pdf}
+\caption{Scaling of $\langle \mu \rangle_c$ vs $n$ in real networks (Data), together with the mean-field expectation $c_2/e$, Eq.~\eqref{muMF}, evaluated on the measured degree distribution with no fitted parameter (MF). a) Internet at the Autonomous System level, 733 daily snapshots; b) protein interaction networks of 12 organisms with more than 1000 proteins; c) the arxiv/cond-mat co-authorship network accumulated year by year. Each point is a single empirical network, and $\langle\mu\rangle_c=\langle\mu\rangle/\psi$ is the average restricted to connected pairs. The lines are fits over the full range, a power law in a and c and an exponential in b.}
+\label{fig_real}
+\end{figure}
 
 To gain insights in the context of real networks, I have selected three systems with data at different stages of the network evolution. The Internet map at the Autonomous System (AS) level downloaded from \cite{snapnets}, where nodes are ASs and links are external connections between them. Protein interaction networks for different organisms \cite{stark2006biogrid}, excluding virus related networks and small networks with less than 1,000 proteins, where nodes are proteins and links are reported physical interactions between them. Finally, the co-authorship network of \verb|arxiv/cond-mat|, where nodes are authors and two authors are linked if they have co-authored a preprint \cite{cornell_arxiv_dataset}. The noise and non-stationarity of the data precludes any strong statements, but we can highlight some trends.
 
