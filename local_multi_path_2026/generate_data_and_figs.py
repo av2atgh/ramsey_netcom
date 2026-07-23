@@ -304,7 +304,7 @@ plt.savefig(
 )
 
 
-# figure 5
+# figure 4
 
 plt.rcParams.update({"font.size": 16})
 
@@ -360,6 +360,6 @@ ax_.set_title(r'c) arxiv/cond-mat co-authorship', x=-0.1, y=1.05, horizontalalig
 plt.subplots_adjust(bottom=0,  hspace=0.35, top=3)
 
 plt.savefig(
-    "fig5.pdf", bbox_inches="tight", facecolor="white", edgecolor="none", dpi=300
+    "fig4.pdf", bbox_inches="tight", facecolor="white", edgecolor="none", dpi=300
 )
 
