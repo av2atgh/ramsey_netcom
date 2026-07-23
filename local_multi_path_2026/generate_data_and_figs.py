@@ -304,35 +304,6 @@ plt.savefig(
 )
 
 
-# figure 4
-
-plt.rcParams.update({"font.size": 12})
-
-fig, ax = plt.subplots()
-
-df = pd.read_csv(f"{DATAPATH}/model-bbd_nr1_vs_n.csv")
-# the csv stores the generation index t; convert it to the node count
-df["n"] = 3 * (3**df.n + 1) // 2
-
-ax.scatter(df.n, df.multipath_rnd, label=r"$BBD(n, 1)^*$")
-x = np.log(df.n)
-y = np.log(df.multipath_rnd)
-alpha = -1 + 3 / (1 + np.log(3) / np.log(2))
-intercept = np.mean(y - alpha * x)
-x1 = np.exp(np.linspace(x.min(), x.max(), num=1000))
-y1 = np.exp(intercept + alpha * np.log(x1))
-ax.plot(x1, y1, "k--", label=r"$bn^{\alpha}$")
-ax.scatter(df.n, df.multipath, label=r"$BBD(n, 1)$", marker="s")
-x1, y1 = get_fit(df.n, df.multipath, "log-linear")
-ax.plot(x1, y1, "k-.", label=r"$a + b\log n$")
-ax.set(xlabel=r"$n$", ylabel=r"$\mu$", xscale="log")
-ax.legend(loc="upper left", frameon=0)
-
-plt.savefig(
-    "fig4.pdf", bbox_inches="tight", facecolor="white", edgecolor="none", dpi=300
-)
-
-
 # figure 5
 
 plt.rcParams.update({"font.size": 16})

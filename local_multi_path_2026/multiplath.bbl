@@ -6,7 +6,7 @@
 %Control: page (0) single
 %Control: year (1) truncated
 %Control: production of eprint (0) enabled
-\begin{thebibliography}{35}%
+\begin{thebibliography}{37}%
 \makeatletter
 \providecommand \@ifxundefined [1]{%
  \@ifx{#1\undefined}
@@ -383,4 +383,20 @@
   Graphs}}}},\ \bibinfo {edition} {2nd}\ ed.\ (\bibinfo  {publisher} {Cambridge
   University Press},\ \bibinfo {address} {Cambridge},\ \bibinfo {year}
   {2001})\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Vazquez}(2026{\natexlab{a}})}]{vazquez2026pseudofractal}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Vazquez}},\ }\href {https://arxiv.org/abs/2607.03010} {\enquote
+  {\bibinfo {title} {Community structure of the pseudofractal web},}\ }
+  (\bibinfo {year} {2026}{\natexlab{a}}),\ \Eprint
+  {http://arxiv.org/abs/2607.03010} {arXiv:2607.03010 [physics.soc-ph]}
+  \BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Vazquez}(2026{\natexlab{b}})}]{vazquez2026rgcrossing}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Vazquez}},\ }\href {https://arxiv.org/abs/2607.05954} {\enquote
+  {\bibinfo {title} {The Ramsey community number as a renormalization-group
+  crossing},}\ } (\bibinfo {year} {2026}{\natexlab{b}}),\ \Eprint
+  {http://arxiv.org/abs/2607.05954} {arXiv:2607.05954 [cond-mat.stat-mech]}
+  \BibitemShut {NoStop}%
 \end{thebibliography}%
