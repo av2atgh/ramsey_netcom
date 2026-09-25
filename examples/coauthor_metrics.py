@@ -44,7 +44,7 @@ def year_of(path):
 def main():
     files = sorted(glob.glob(PATTERN), key=year_of)
     if not files:
-        sys.exit(f"no networks found at {PATTERN}; run build_condmat_coauthor.py first")
+        sys.exit(f"no networks found at {PATTERN}; run build_coauthor.py first")
     max_year = int(os.environ.get("ARXIV_MAX_YEAR", "0")) or None
     max_nodes = int(os.environ.get("ARXIV_MAX_NODES", "0")) or None
 
