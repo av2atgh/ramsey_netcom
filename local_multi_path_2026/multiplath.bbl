@@ -6,7 +6,7 @@
 %Control: page (0) single
 %Control: year (1) truncated
 %Control: production of eprint (0) enabled
-\begin{thebibliography}{37}%
+\begin{thebibliography}{38}%
 \makeatletter
 \providecommand \@ifxundefined [1]{%
  \@ifx{#1\undefined}
@@ -183,6 +183,15 @@
   {Vazquez}},\ }\href {\doibase 10.1103/d7kf-s1cf} {\bibfield  {journal}
   {\bibinfo  {journal} {Phys. Rev. E}\ }\textbf {\bibinfo {volume} {111}},\
   \bibinfo {pages} {064314} (\bibinfo {year} {2025})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont
+  {Vazquez}(2026{\natexlab{a}})}]{vazquez2026multipathdata}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Vazquez}},\ }\href@noop {} {\enquote {\bibinfo {title} {{Data and code for
+  `Local network evolution rules drive shortest path multiplicity'}},}\
+  }\bibinfo {howpublished} {GitHub repository,
+  \url{https://github.com/av2atgh/ramsey_netcom/tree/master/local_multi_path_2026}}
+  (\bibinfo {year} {2026}{\natexlab{a}})\BibitemShut {NoStop}%
 \bibitem [{\citenamefont {Dorogovtsev}\ \emph {et~al.}(2001)\citenamefont
   {Dorogovtsev}, \citenamefont {Mendes},\ and\ \citenamefont
   {Samukhin}}]{dorogotsev2001link}%
@@ -247,6 +256,13 @@
   {journal} {\bibinfo  {journal} {Phys. Rev. E}\ }\textbf {\bibinfo {volume}
   {65}},\ \bibinfo {pages} {066122} (\bibinfo {year} {2002})}\BibitemShut
   {NoStop}%
+\bibitem [{\citenamefont
+  {Vazquez}(2026{\natexlab{b}})}]{vazquez2026pseudofractal}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Vazquez}},\ }\href {https://arxiv.org/abs/2607.03010} {\  (\bibinfo {year}
+  {2026}{\natexlab{b}})},\ \Eprint {http://arxiv.org/abs/2607.03010}
+  {arXiv:2607.03010 [physics.soc-ph]} \BibitemShut {NoStop}%
 \bibitem [{\citenamefont {Migdal}(1975)}]{migdal1975phase}%
   \BibitemOpen
   \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.~A.}\ \bibnamefont
@@ -259,6 +275,20 @@
   {Kadanoff}},\ }\href@noop {} {\bibfield  {journal} {\bibinfo  {journal} {Ann.
   Phys.}\ }\textbf {\bibinfo {volume} {100}},\ \bibinfo {pages} {359} (\bibinfo
   {year} {1976})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Newman}(2002)}]{newman02a}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {M.~E.~J.}\
+  \bibnamefont {Newman}},\ }\href {\doibase 10.1103/PhysRevLett.89.208701}
+  {\bibfield  {journal} {\bibinfo  {journal} {Phys. Rev. Lett.}\ }\textbf
+  {\bibinfo {volume} {89}},\ \bibinfo {pages} {208701} (\bibinfo {year}
+  {2002})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont
+  {Vazquez}(2026{\natexlab{c}})}]{vazquez2026rgcrossing}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Vazquez}},\ }\href {https://arxiv.org/abs/2607.05954} {\  (\bibinfo {year}
+  {2026}{\natexlab{c}})},\ \Eprint {http://arxiv.org/abs/2607.05954}
+  {arXiv:2607.05954 [cond-mat.stat-mech]} \BibitemShut {NoStop}%
 \bibitem [{\citenamefont {Leskovec}\ and\ \citenamefont
   {Krevl}(2014)}]{snapnets}%
   \BibitemOpen
@@ -309,13 +339,6 @@
   {journal} {\bibinfo  {journal} {Phys. Rev. E}\ }\textbf {\bibinfo {volume}
   {65}},\ \bibinfo {pages} {066130} (\bibinfo {year} {2002})}\BibitemShut
   {NoStop}%
-\bibitem [{\citenamefont {Newman}(2002)}]{newman02a}%
-  \BibitemOpen
-  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {M.~E.~J.}\
-  \bibnamefont {Newman}},\ }\href {\doibase 10.1103/PhysRevLett.89.208701}
-  {\bibfield  {journal} {\bibinfo  {journal} {Phys. Rev. Lett.}\ }\textbf
-  {\bibinfo {volume} {89}},\ \bibinfo {pages} {208701} (\bibinfo {year}
-  {2002})}\BibitemShut {NoStop}%
 \bibitem [{\citenamefont {Krapivsky}\ \emph {et~al.}(2000)\citenamefont
   {Krapivsky}, \citenamefont {Redner},\ and\ \citenamefont
   {Leyvraz}}]{degree_dist_krapivsky00}%
@@ -383,20 +406,4 @@
   Graphs}}}},\ \bibinfo {edition} {2nd}\ ed.\ (\bibinfo  {publisher} {Cambridge
   University Press},\ \bibinfo {address} {Cambridge},\ \bibinfo {year}
   {2001})\BibitemShut {NoStop}%
-\bibitem [{\citenamefont {Vazquez}(2026{\natexlab{a}})}]{vazquez2026pseudofractal}%
-  \BibitemOpen
-  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
-  {Vazquez}},\ }\href {https://arxiv.org/abs/2607.03010} {\enquote
-  {\bibinfo {title} {Community structure of the pseudofractal web},}\ }
-  (\bibinfo {year} {2026}{\natexlab{a}}),\ \Eprint
-  {http://arxiv.org/abs/2607.03010} {arXiv:2607.03010 [physics.soc-ph]}
-  \BibitemShut {NoStop}%
-\bibitem [{\citenamefont {Vazquez}(2026{\natexlab{b}})}]{vazquez2026rgcrossing}%
-  \BibitemOpen
-  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
-  {Vazquez}},\ }\href {https://arxiv.org/abs/2607.05954} {\enquote
-  {\bibinfo {title} {The Ramsey community number as a renormalization-group
-  crossing},}\ } (\bibinfo {year} {2026}{\natexlab{b}}),\ \Eprint
-  {http://arxiv.org/abs/2607.05954} {arXiv:2607.05954 [cond-mat.stat-mech]}
-  \BibitemShut {NoStop}%
 \end{thebibliography}%
