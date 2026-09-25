@@ -315,9 +315,9 @@
   \BibitemOpen
   \bibfield  {author} {\bibinfo {author} {\bibnamefont {{Cornell
   University}}},\ }\href@noop {} {\enquote {\bibinfo {title} {{arXiv
-  Dataset}},}\ }\bibinfo {howpublished} {Kaggle,
-  \url{https://www.kaggle.com/datasets/Cornell-University/arxiv}, metadata
-  snapshot of 28 June 2026} (\bibinfo {year} {2026})\BibitemShut {NoStop}%
+  Dataset}},}\ }\bibinfo {howpublished} {arXiv bulk data access,
+  \url{https://info.arxiv.org/help/bulk_data.html}, metadata snapshot of 28
+  June 2026} (\bibinfo {year} {2026})\BibitemShut {NoStop}%
 \bibitem [{\citenamefont {Pastor-Satorras}\ \emph {et~al.}(2001)\citenamefont
   {Pastor-Satorras}, \citenamefont {V\'azquez},\ and\ \citenamefont
   {Vespignani}}]{pastor-satorras01}%
