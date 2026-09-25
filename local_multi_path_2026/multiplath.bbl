@@ -311,12 +311,13 @@
   10.1093/nar/gkj109} {\bibfield  {journal} {\bibinfo  {journal} {Nucleic Acids
   Research}\ }\textbf {\bibinfo {volume} {34}},\ \bibinfo {pages} {D535}
   (\bibinfo {year} {2006})}\BibitemShut {NoStop}%
-\bibitem [{\citenamefont {arXiv.org submitters}(2024)}]{cornell_arxiv_dataset}%
+\bibitem [{\citenamefont {{Cornell University}}(2026)}]{cornell_arxiv_dataset}%
   \BibitemOpen
-  \bibfield  {author} {\bibinfo {author} {\bibnamefont {arXiv.org
-  submitters}},\ }\href {\doibase 10.34740/KAGGLE/DSV/7548853} {\enquote
-  {\bibinfo {title} {arxiv dataset},}\ } (\bibinfo {year} {2024})\BibitemShut
-  {NoStop}%
+  \bibfield  {author} {\bibinfo {author} {\bibnamefont {{Cornell
+  University}}},\ }\href@noop {} {\enquote {\bibinfo {title} {{arXiv
+  Dataset}},}\ }\bibinfo {howpublished} {Kaggle,
+  \url{https://www.kaggle.com/datasets/Cornell-University/arxiv}, metadata
+  snapshot of 28 June 2026} (\bibinfo {year} {2026})\BibitemShut {NoStop}%
 \bibitem [{\citenamefont {Pastor-Satorras}\ \emph {et~al.}(2001)\citenamefont
   {Pastor-Satorras}, \citenamefont {V\'azquez},\ and\ \citenamefont
   {Vespignani}}]{pastor-satorras01}%
