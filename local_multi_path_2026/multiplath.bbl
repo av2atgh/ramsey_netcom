@@ -188,7 +188,7 @@
   \BibitemOpen
   \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
   {Vazquez}},\ }\href@noop {} {\enquote {\bibinfo {title} {{Data and code for
-  `Local network evolution rules drive shortest path multiplicity'}},}\
+  `Local network evolution rules driving shortest path multiplicity'}},}\
   }\bibinfo {howpublished} {GitHub repository,
   \url{https://github.com/av2atgh/ramsey_netcom/tree/master/local_multi_path_2026}}
   (\bibinfo {year} {2026}{\natexlab{a}})\BibitemShut {NoStop}%

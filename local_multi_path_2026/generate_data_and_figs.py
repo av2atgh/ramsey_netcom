@@ -1,5 +1,5 @@
 """
-wrapper for paper: Local network evolution rules drive shortest path multiplicity
+wrapper for paper: Local network evolution rules driving shortest path multiplicity
 """
 
 import os
